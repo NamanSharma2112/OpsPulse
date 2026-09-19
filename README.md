@@ -46,7 +46,37 @@ Postgres applies everything in `infra/migrations` the first time its volume
 is created. The API is on `:8080`; the web app is on `:3000`, serving the
 landing page at `/` and the dashboard at `/dashboard`.
 
-Create an account and start watching a repository:
+### Sign in with GitHub
+
+Create an OAuth app at **GitHub → Settings → Developer settings → OAuth Apps**:
+
+- **Homepage URL** — `http://localhost:3000`
+- **Authorization callback URL** — `http://localhost:8080/v1/auth/github/callback`
+
+Put the client id and secret in `.env`, along with an encryption key for the
+access tokens:
+
+```bash
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+TOKEN_ENCRYPTION_KEY=$(openssl rand -hex 32)
+```
+
+Then open http://localhost:3000/signin and continue with GitHub. From there:
+pick a repository, and OpsPulse installs the webhook itself.
+
+> **Webhooks need a public address.** GitHub cannot reach `localhost`, so for
+> local development run a tunnel and set `PUBLIC_API_URL` to its https URL:
+>
+> ```bash
+> cloudflared tunnel --url http://localhost:8080   # or: ngrok http 8080
+> ```
+>
+> Without it the repository still connects, but no deliveries arrive.
+
+### Without GitHub
+
+Password sign-in still works, and the webhook is configured by hand:
 
 ```bash
 TOKEN=$(curl -sS -X POST localhost:8080/v1/auth/register \
@@ -123,6 +153,12 @@ The API reads its configuration from the environment:
 | `DATABASE_URL` | local Postgres | libpq connection string |
 | `JWT_SECRET` | dev placeholder | **Required** in production |
 | `JWT_TTL` | `24h` | Session lifetime |
+| `GITHUB_CLIENT_ID` / `_SECRET` | — | OAuth app; enables sign-in and webhook install |
+| `GITHUB_REDIRECT_URL` | `…:8080/v1/auth/github/callback` | Must match the OAuth app |
+| `TOKEN_ENCRYPTION_KEY` | dev placeholder | Seals GitHub tokens; **required** in production |
+| `APP_URL` | `http://localhost:3000` | Where sign-in returns the browser |
+| `PUBLIC_API_URL` | `http://localhost:8080` | Address GitHub delivers webhooks to |
+| `SECURE_COOKIES` | `false` | Must be `true` in production |
 | `CORS_ORIGINS` | `http://localhost:3000` | Comma-separated |
 | `LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` |
 | `SHUTDOWN_TIMEOUT` | `15s` | Grace period for in-flight requests |
@@ -178,14 +214,16 @@ rebuilt by replaying it. See
 
 ## Status
 
-**M1 — working GitHub integration: complete end to end.** Sign up → create
-organization → create project → connect repository → GitHub delivers →
-signature verified → stored in Postgres → visible on the dashboard. Verified
-against a real Postgres, including replay suppression and rejection of
-unsigned deliveries and unknown repositories.
+**M1 — working GitHub integration: complete, and driveable from the browser.**
+Sign in with GitHub → pick a repository → OpsPulse installs the webhook →
+GitHub delivers → signature verified → stored in Postgres → visible on the
+dashboard.
 
-The one gap in that flow is the front end: every step before the dashboard is
-an API call, because there is no sign-up, organization or repository UI yet.
+Verified end to end against a real Postgres and a stubbed GitHub: the OAuth
+round trip, the `state` check, the httpOnly session cookie, webhook
+installation, acceptance of a delivery signed with the installed secret,
+rejection of a wrong signature, replay suppression, and encryption of the
+stored access token.
 
 The landing page's hero demo runs on fixed sample scenarios, not live data —
 it illustrates the pipeline rather than reading from it. The correlation and
@@ -193,6 +231,7 @@ AI-explanation stages it depicts are the product direction; the API today
 records events, projections and metric samples, and the statistical and
 explanation stages are not implemented yet.
 
-Also not built: GitHub OAuth sign-in, automatic webhook installation through
-the GitHub API (the secret is pasted in by hand today), backfill from the
-GitHub REST API, and a retention policy for `events`.
+Not built: token refresh and revocation (a grant revoked on GitHub leaves a
+stale row that fails on next use), a GitHub App to replace the OAuth app and
+scope access per repository rather than per user, backfill from the GitHub
+REST API, and a retention policy for `events`.

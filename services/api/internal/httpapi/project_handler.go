@@ -50,17 +50,24 @@ func (s *Server) handleConnectRepository(w http.ResponseWriter, r *http.Request)
 	if !decodeJSON(w, r, &in) {
 		return
 	}
-	repository, secret, err := s.projects.ConnectGitHub(r.Context(), currentUser(r).ID,
+	result, err := s.projects.ConnectGitHub(r.Context(), currentUser(r),
 		r.PathValue("projectID"), in.Repo, in.DefaultBranch)
 	if err != nil {
 		writeDomainError(w, s.log, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, map[string]any{
-		"repository":     repository,
-		"webhook_secret": secret,
-		"webhook_url":    "/v1/webhooks/github",
-	})
+	writeJSON(w, http.StatusCreated, result)
+}
+
+// handleListGitHubRepositories lists the repositories the caller can
+// administer, which is what the connect flow picks from.
+func (s *Server) handleListGitHubRepositories(w http.ResponseWriter, r *http.Request) {
+	repos, err := s.projects.ListGitHubRepositories(r.Context(), currentUser(r))
+	if err != nil {
+		writeDomainError(w, s.log, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"repositories": repos})
 }
 
 func (s *Server) handleGetProject(w http.ResponseWriter, r *http.Request) {

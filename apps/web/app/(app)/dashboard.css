@@ -289,3 +289,93 @@ code {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   font-size: 0.92em;
 }
+
+/* Signed-in identity in the dashboard nav. */
+.nav-user {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Connect a repository ---------------------------------------------------- */
+.connect-form {
+  display: grid;
+  gap: 14px;
+  max-width: 460px;
+}
+
+.connect-field {
+  display: grid;
+  gap: 6px;
+}
+
+.connect-field > span {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.connect-field select,
+.connect-field input {
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.connect-field select:focus-visible,
+.connect-field input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.connect-submit {
+  justify-self: start;
+  min-height: 40px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 550;
+  transition: opacity 180ms ease, transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.connect-submit:active {
+  transform: scale(0.97);
+}
+
+.connect-submit:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.connect-error,
+.connect-message {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.connect-error {
+  border: 1px solid color-mix(in srgb, var(--critical) 35%, transparent);
+  background: color-mix(in srgb, var(--critical) 10%, transparent);
+  color: var(--critical);
+}
+
+.connect-message {
+  border: 1px solid color-mix(in srgb, var(--healthy) 35%, transparent);
+  background: color-mix(in srgb, var(--healthy) 10%, transparent);
+  color: var(--healthy);
+}

@@ -2,39 +2,48 @@ import type {
   DeploymentList,
   EventList,
   IncidentList,
+  Organization,
+  OrganizationList,
+  Project,
   ProjectHealth,
   ProjectList,
   PullRequestList,
   RepositoryList,
+  User,
 } from "@opspulse/types";
-
-const API_URL = process.env.OPSPULSE_API_URL ?? "http://localhost:8080";
-const API_TOKEN = process.env.OPSPULSE_API_TOKEN ?? "";
+import { apiBaseUrl, sessionToken } from "./session";
 
 /**
- * Result of an API read. The dashboard renders partial data rather than
- * failing outright, so every fetch returns an error instead of throwing.
+ * Result of an API call. The dashboard renders partial data rather than
+ * failing outright, so these return an error instead of throwing.
  */
-export type ApiResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: string };
+export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
-/** True when the dashboard has been given a token to read the API with. */
-export function isConfigured(): boolean {
-  return API_TOKEN !== "";
+/** A GitHub repository the signed-in user can administer. */
+export interface GitHubRepo {
+  id: number;
+  name: string;
+  full_name: string;
+  private: boolean;
+  default_branch: string;
+  html_url: string;
 }
 
-export function apiUrl(): string {
-  return API_URL;
-}
+async function request<T>(
+  path: string,
+  init?: { method?: string; body?: unknown },
+): Promise<ApiResult<T>> {
+  const token = await sessionToken();
+  if (!token) return { ok: false, error: "not signed in" };
 
-async function get<T>(path: string): Promise<ApiResult<T>> {
-  if (!API_TOKEN) {
-    return { ok: false, error: "OPSPULSE_API_TOKEN is not set" };
-  }
   try {
-    const res = await fetch(`${API_URL}${path}`, {
-      headers: { Authorization: `Bearer ${API_TOKEN}` },
+    const res = await fetch(`${apiBaseUrl()}${path}`, {
+      method: init?.method ?? "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(init?.body ? { "Content-Type": "application/json" } : {}),
+      },
+      body: init?.body ? JSON.stringify(init.body) : undefined,
       // Operational data goes stale fast; always read through to the API.
       cache: "no-store",
     });
@@ -47,41 +56,52 @@ async function get<T>(path: string): Promise<ApiResult<T>> {
           : `request failed with status ${res.status}`;
       return { ok: false, error: message };
     }
+    if (res.status === 204) return { ok: true, data: undefined as T };
     return { ok: true, data: (await res.json()) as T };
   } catch (err) {
-    // Most often the API container is not up yet.
     const message = err instanceof Error ? err.message : "unknown error";
-    return { ok: false, error: `could not reach the API at ${API_URL}: ${message}` };
+    return { ok: false, error: `could not reach the API: ${message}` };
   }
+}
+
+/** True when the request carries a session. */
+export async function isSignedIn(): Promise<boolean> {
+  return (await sessionToken()) !== "";
+}
+
+export function currentUser(): Promise<ApiResult<User>> {
+  return request<User>("/v1/auth/me");
+}
+
+// Reads ----------------------------------------------------------------------
+export function listOrganizations(): Promise<ApiResult<OrganizationList>> {
+  return request<OrganizationList>("/v1/organizations");
 }
 
 export function listProjects(): Promise<ApiResult<ProjectList>> {
-  return get<ProjectList>("/v1/projects");
+  return request<ProjectList>("/v1/projects");
 }
 
-/**
- * Resolves the project the dashboard should display: the one pinned by
- * OPSPULSE_PROJECT_ID, otherwise the first the token can see.
- */
-export async function activeProjectId(): Promise<ApiResult<string>> {
-  const pinned = process.env.OPSPULSE_PROJECT_ID;
-  if (pinned) return { ok: true, data: pinned };
+export function listRepositories(projectID: string): Promise<ApiResult<RepositoryList>> {
+  return request<RepositoryList>(`/v1/projects/${projectID}/repositories`);
+}
 
-  const projects = await listProjects();
-  if (!projects.ok) return projects;
-  const first = projects.data.projects[0];
-  if (!first) {
-    return { ok: false, error: "no projects yet — create one to start collecting events" };
-  }
-  return { ok: true, data: first.id };
+/** Repositories on GitHub the signed-in user can administer. */
+export function listGitHubRepositories(): Promise<ApiResult<{ repositories: GitHubRepo[] }>> {
+  return request<{ repositories: GitHubRepo[] }>("/v1/github/repositories");
+}
+
+/** The raw event feed — the source of truth every projection is built from. */
+export function listEvents(projectID: string, limit = 50): Promise<ApiResult<EventList>> {
+  return request<EventList>(`/v1/projects/${projectID}/events?limit=${limit}`);
 }
 
 export function getHealth(projectID: string): Promise<ApiResult<ProjectHealth>> {
-  return get<ProjectHealth>(`/v1/projects/${projectID}/health`);
+  return request<ProjectHealth>(`/v1/projects/${projectID}/health`);
 }
 
 export function listDeployments(projectID: string, limit = 25): Promise<ApiResult<DeploymentList>> {
-  return get<DeploymentList>(`/v1/projects/${projectID}/deployments?limit=${limit}`);
+  return request<DeploymentList>(`/v1/projects/${projectID}/deployments?limit=${limit}`);
 }
 
 export function listPullRequests(
@@ -91,16 +111,7 @@ export function listPullRequests(
 ): Promise<ApiResult<PullRequestList>> {
   const query = new URLSearchParams({ limit: String(limit) });
   if (state) query.set("state", state);
-  return get<PullRequestList>(`/v1/projects/${projectID}/pull-requests?${query}`);
-}
-
-export function listRepositories(projectID: string): Promise<ApiResult<RepositoryList>> {
-  return get<RepositoryList>(`/v1/projects/${projectID}/repositories`);
-}
-
-/** The raw event feed — the source of truth every projection is built from. */
-export function listEvents(projectID: string, limit = 50): Promise<ApiResult<EventList>> {
-  return get<EventList>(`/v1/projects/${projectID}/events?limit=${limit}`);
+  return request<PullRequestList>(`/v1/projects/${projectID}/pull-requests?${query}`);
 }
 
 export function listIncidents(
@@ -110,5 +121,57 @@ export function listIncidents(
 ): Promise<ApiResult<IncidentList>> {
   const query = new URLSearchParams({ limit: String(limit) });
   if (status) query.set("status", status);
-  return get<IncidentList>(`/v1/projects/${projectID}/incidents?${query}`);
+  return request<IncidentList>(`/v1/projects/${projectID}/incidents?${query}`);
+}
+
+// Writes ---------------------------------------------------------------------
+export function createOrganization(name: string): Promise<ApiResult<Organization>> {
+  return request<Organization>("/v1/organizations", { method: "POST", body: { name } });
+}
+
+export function createProject(
+  organizationID: string,
+  name: string,
+): Promise<ApiResult<Project>> {
+  return request<Project>("/v1/projects", {
+    method: "POST",
+    body: { organization_id: organizationID, name },
+  });
+}
+
+/** What the API reports after connecting a repository. */
+export interface ConnectResult {
+  repository: { id: string; external_id: string; name: string };
+  webhook_secret: string;
+  webhook_url: string;
+  webhook_installed: boolean;
+  manual_reason?: string;
+}
+
+export function connectRepository(
+  projectID: string,
+  repo: string,
+  defaultBranch: string,
+): Promise<ApiResult<ConnectResult>> {
+  return request<ConnectResult>(`/v1/projects/${projectID}/repositories`, {
+    method: "POST",
+    body: { repo, default_branch: defaultBranch },
+  });
+}
+
+/**
+ * Resolves the project the dashboard should display: the one pinned by
+ * OPSPULSE_PROJECT_ID, otherwise the first the session can see.
+ */
+export async function activeProjectId(): Promise<ApiResult<string>> {
+  const pinned = process.env.OPSPULSE_PROJECT_ID;
+  if (pinned) return { ok: true, data: pinned };
+
+  const projects = await listProjects();
+  if (!projects.ok) return projects;
+  const first = projects.data.projects[0];
+  if (!first) {
+    return { ok: false, error: "no projects yet" };
+  }
+  return { ok: true, data: first.id };
 }

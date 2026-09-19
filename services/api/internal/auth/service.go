@@ -116,6 +116,9 @@ func (s *Service) Authenticate(ctx context.Context, token string) (*domain.User,
 	return user, nil
 }
 
+// nowUTC exists so the GitHub flow and the password flow agree on the clock.
+func nowUTC() time.Time { return time.Now().UTC() }
+
 func (s *Service) newSession(user *domain.User) (*Session, error) {
 	token, err := s.tokens.Issue(user.ID, user.Email)
 	if err != nil {

@@ -23,7 +23,29 @@ Authenticated endpoints expect `Authorization: Bearer <token>`.
 | --- | --- | --- | --- |
 | `POST` | `/v1/auth/register` | — | Create an account, return a session |
 | `POST` | `/v1/auth/login` | — | Exchange credentials for a session |
-| `GET` | `/v1/auth/me` | bearer | The current user |
+| `GET` | `/v1/auth/providers` | — | Which sign-in methods this server offers |
+| `GET` | `/v1/auth/me` | session | The current user |
+| `POST` | `/v1/auth/signout` | — | Clear the session cookie |
+
+### Sign in with GitHub
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/v1/auth/github` | Redirects to GitHub, setting a `state` cookie |
+| `GET` | `/v1/auth/github/callback` | Completes sign-in, sets the session cookie, redirects to the dashboard |
+
+The callback verifies `state` against the cookie set at the start of the
+flow; a mismatch is refused. On success it sets `opspulse_session`, an
+httpOnly cookie, and redirects to `APP_URL/dashboard`.
+
+Authenticated endpoints accept **either** `Authorization: Bearer <token>` or
+that cookie, so the dashboard never has to hold a credential in script.
+
+Returns `501` when the server has no OAuth app configured.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/v1/github/repositories` | Repositories the caller can administer on GitHub |
 
 ```bash
 curl -X POST localhost:8080/v1/auth/register \
@@ -76,8 +98,22 @@ curl -X POST localhost:8080/v1/projects/<uuid>/repositories \
   -d '{"repo":"acme/opspulse","default_branch":"main"}'
 ```
 
-The response carries `webhook_secret` **once**. Configure it on that
-repository's webhook; it is never returned again.
+When the caller signed in with GitHub, OpsPulse installs the webhook itself
+and the response reports `webhook_installed: true`.
+
+```json
+{
+  "repository": { "id": "…", "external_id": "acme/opspulse", "name": "OpsPulse" },
+  "webhook_secret": "…",
+  "webhook_url": "https://ops.example.com/v1/webhooks/github",
+  "webhook_installed": true
+}
+```
+
+If installation fails the repository is still connected, `webhook_installed`
+is `false`, and `manual_reason` says why — no admin rights, no public URL, or
+a hook already present. The `webhook_secret` is returned **once** either way,
+so a manual setup stays possible; it is never returned again.
 
 ## Dashboard reads
 

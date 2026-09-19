@@ -1,0 +1,137 @@
+/* Sign-in. One card on the cream canvas, nothing else competing. */
+.auth-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-xl);
+  padding: 36px 32px;
+  text-align: center;
+}
+
+.auth-mark {
+  display: inline-flex;
+  margin-bottom: 20px;
+}
+
+.auth-title {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+}
+
+.auth-sub {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink-muted);
+  margin: 0 0 28px;
+}
+
+.auth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 18px;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: var(--ink);
+  color: var(--on-primary);
+  font-size: 15px;
+  font-weight: 500;
+  transition: background-color var(--dur-hover) ease, transform var(--dur-press) var(--ease-out);
+}
+
+.auth-btn:active {
+  transform: scale(0.98);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .auth-btn:hover {
+    background: var(--inverse-canvas);
+  }
+}
+
+.auth-scopes {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--hairline-soft);
+  text-align: left;
+}
+
+.auth-scopes h2 {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  margin: 0 0 10px;
+}
+
+.auth-scopes ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.auth-scopes li {
+  /* A fixed first column so the descriptions line up rather than starting
+     at three different offsets. */
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-subtle);
+}
+
+.auth-scopes code {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.auth-error {
+  margin-bottom: 20px;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid color-mix(in srgb, var(--semantic-error) 35%, transparent);
+  background: color-mix(in srgb, var(--semantic-error) 8%, transparent);
+  color: var(--semantic-error);
+  font-size: 13px;
+  text-align: left;
+}
+
+.auth-note {
+  margin-top: 20px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-tertiary);
+}
+
+.auth-back {
+  display: inline-block;
+  margin-top: 22px;
+  font-size: 13px;
+  color: var(--ink-subtle);
+  transition: color var(--dur-hover) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .auth-back:hover {
+    color: var(--ink);
+  }
+}

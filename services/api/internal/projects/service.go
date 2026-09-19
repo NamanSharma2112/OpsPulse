@@ -5,24 +5,68 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/NamanSharma2112/OpsPulse/services/api/internal/domain"
+	gh "github.com/NamanSharma2112/OpsPulse/services/api/internal/github"
 	"github.com/NamanSharma2112/OpsPulse/services/api/internal/orgs"
 	"github.com/NamanSharma2112/OpsPulse/services/api/internal/store"
 )
+
+// GitHubClientFactory hands back a GitHub client acting as a given user.
+type GitHubClientFactory interface {
+	ClientFor(user *domain.User) (*gh.Client, error)
+}
 
 // Service exposes project and repository operations.
 type Service struct {
 	projects     store.Projects
 	repositories store.Repositories
 	orgs         *orgs.Service
+	github       GitHubClientFactory
+	// webhookURL is the address GitHub delivers to. It must be reachable
+	// from the internet for installation to be worth attempting.
+	webhookURL string
+	log        *slog.Logger
 }
 
 // NewService wires the project service.
-func NewService(p store.Projects, r store.Repositories, o *orgs.Service) *Service {
-	return &Service{projects: p, repositories: r, orgs: o}
+func NewService(
+	p store.Projects,
+	r store.Repositories,
+	o *orgs.Service,
+	github GitHubClientFactory,
+	webhookURL string,
+	log *slog.Logger,
+) *Service {
+	return &Service{projects: p, repositories: r, orgs: o, github: github, webhookURL: webhookURL, log: log}
+}
+
+// ConnectResult reports what happened when a repository was connected.
+type ConnectResult struct {
+	Repository *domain.Repository `json:"repository"`
+	// WebhookSecret is returned once. When OpsPulse installed the webhook
+	// itself the user never needs it, but it is shown either way so a manual
+	// setup stays possible.
+	WebhookSecret string `json:"webhook_secret"`
+	WebhookURL    string `json:"webhook_url"`
+	// WebhookInstalled is false when the hook must be added by hand, with
+	// ManualReason saying why.
+	WebhookInstalled bool   `json:"webhook_installed"`
+	ManualReason     string `json:"manual_reason,omitempty"`
+}
+
+// ListGitHubRepositories returns the repositories the caller can administer,
+// which is the set OpsPulse can install a webhook on.
+func (s *Service) ListGitHubRepositories(ctx context.Context, user *domain.User) ([]gh.Repo, error) {
+	client, err := s.github.ClientFor(user)
+	if err != nil {
+		return nil, err
+	}
+	return client.ListRepositories(ctx)
 }
 
 // Create makes a project inside an organization the caller can write to.
@@ -76,22 +120,22 @@ func (s *Service) Get(ctx context.Context, userID, projectID string) (*domain.Pr
 // webhook must sign deliveries with. The plaintext secret is returned once,
 // here, so it can be pasted into the repository's webhook settings; it is
 // never served again.
-func (s *Service) ConnectGitHub(ctx context.Context, userID, projectID, repo, defaultBranch string) (*domain.Repository, string, error) {
-	project, err := s.Get(ctx, userID, projectID)
+func (s *Service) ConnectGitHub(ctx context.Context, user *domain.User, projectID, repo, defaultBranch string) (*ConnectResult, error) {
+	project, err := s.Get(ctx, user.ID, projectID)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
-	if err := s.requireWriter(ctx, userID, project.OrganizationID); err != nil {
-		return nil, "", err
+	if err := s.requireWriter(ctx, user.ID, project.OrganizationID); err != nil {
+		return nil, err
 	}
 
 	owner, name, ok := strings.Cut(strings.TrimSpace(repo), "/")
 	if !ok || owner == "" || name == "" {
-		return nil, "", fmt.Errorf(`%w: repo must look like "owner/name"`, domain.ErrInvalidInput)
+		return nil, fmt.Errorf(`%w: repo must look like "owner/name"`, domain.ErrInvalidInput)
 	}
 	secret, err := newWebhookSecret()
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	repository := &domain.Repository{
@@ -101,11 +145,69 @@ func (s *Service) ConnectGitHub(ctx context.Context, userID, projectID, repo, de
 		Name:          name,
 		DefaultBranch: cmpOr(strings.TrimSpace(defaultBranch), "main"),
 		WebhookSecret: secret,
+		ConnectedBy:   &user.ID,
 	}
 	if err := s.repositories.Create(ctx, repository); err != nil {
-		return nil, "", err
+		return nil, err
 	}
-	return repository, secret, nil
+
+	result := &ConnectResult{
+		Repository:    repository,
+		WebhookSecret: secret,
+		WebhookURL:    s.webhookURL,
+	}
+
+	// Installing the webhook is best effort. The repository is already
+	// connected, and a failure here leaves a working manual path rather than
+	// losing the connection.
+	hookID, reason := s.installWebhook(ctx, user, owner, name, secret)
+	if hookID == 0 {
+		result.ManualReason = reason
+		return result, nil
+	}
+	if err := s.repositories.RecordWebhook(ctx, repository.ID, hookID); err != nil {
+		s.log.Error("webhook installed but not recorded", "error", err, "repository_id", repository.ID)
+		result.ManualReason = "webhook installed, but OpsPulse could not record it"
+		return result, nil
+	}
+	repository.WebhookExternalID = &hookID
+	result.WebhookInstalled = true
+	return result, nil
+}
+
+// installWebhook adds the hook to the repository, returning GitHub's id or a
+// human-readable reason it could not.
+func (s *Service) installWebhook(ctx context.Context, user *domain.User, owner, name, secret string) (int64, string) {
+	if s.webhookURL == "" {
+		return 0, "no public webhook URL is configured on this server"
+	}
+	client, err := s.github.ClientFor(user)
+	if err != nil {
+		return 0, "sign in with GitHub to install webhooks automatically"
+	}
+
+	hook, err := client.CreateWebhook(ctx, owner, name, gh.WebhookRequest{
+		URL:    s.webhookURL,
+		Secret: secret,
+		Events: gh.DefaultWebhookEvents,
+	})
+	if err != nil {
+		var apiErr *gh.APIError
+		if errors.As(err, &apiErr) {
+			switch apiErr.Status {
+			case 403:
+				return 0, "your GitHub account cannot administer this repository"
+			case 404:
+				return 0, "repository not found, or your token lacks admin:repo_hook"
+			case 422:
+				// GitHub rejects a second identical hook.
+				return 0, "a webhook with this URL already exists on the repository"
+			}
+		}
+		s.log.Warn("webhook installation failed", "error", err, "repo", owner+"/"+name)
+		return 0, "GitHub refused the webhook; add it by hand"
+	}
+	return hook.ID, ""
 }
 
 // ListRepositories returns the repositories a project watches.

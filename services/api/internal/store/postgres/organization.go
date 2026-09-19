@@ -44,7 +44,7 @@ func (r *OrganizationRepo) GetBySlug(ctx context.Context, slug string) (*domain.
 func (r *OrganizationRepo) ListForUser(ctx context.Context, userID string) ([]domain.Organization, error) {
 	const q = `SELECT o.id, o.name, o.slug, coalesce(o.github_login, ''), o.created_at, o.updated_at
 		FROM organizations o
-		JOIN org_members m ON m.org_id = o.id
+		JOIN organization_members m ON m.organization_id = o.id
 		WHERE m.user_id = $1
 		ORDER BY o.name`
 	rows, err := r.pool.Query(ctx, q, userID)

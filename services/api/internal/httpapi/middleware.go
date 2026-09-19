@@ -84,12 +84,12 @@ func cors(origins []string) func(http.Handler) http.Handler {
 // caller in the request context.
 func (s *Server) requireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
-		if !ok || strings.TrimSpace(token) == "" {
-			writeError(w, http.StatusUnauthorized, "missing bearer token")
+		token := bearerToken(r)
+		if token == "" {
+			writeError(w, http.StatusUnauthorized, "missing session")
 			return
 		}
-		user, err := s.auth.Authenticate(r.Context(), strings.TrimSpace(token))
+		user, err := s.auth.Authenticate(r.Context(), token)
 		if err != nil {
 			writeDomainError(w, s.log, err)
 			return
@@ -97,6 +97,20 @@ func (s *Server) requireAuth(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), userContextKey, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// bearerToken reads the session from the Authorization header, falling back
+// to the httpOnly cookie the OAuth callback sets.
+func bearerToken(r *http.Request) string {
+	if token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer "); ok {
+		if token = strings.TrimSpace(token); token != "" {
+			return token
+		}
+	}
+	if cookie, err := r.Cookie(sessionCookie); err == nil {
+		return strings.TrimSpace(cookie.Value)
+	}
+	return ""
 }
 
 // currentUser returns the authenticated caller. It is only ever called from

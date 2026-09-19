@@ -19,6 +19,7 @@ type Deps struct {
 	Config       config.Config
 	Logger       *slog.Logger
 	Auth         *auth.Service
+	GitHubAuth   *auth.GitHubService
 	Orgs         *orgs.Service
 	Projects     *projects.Service
 	Ingest       *ingest.Service
@@ -37,6 +38,7 @@ type Server struct {
 	cfg          config.Config
 	log          *slog.Logger
 	auth         *auth.Service
+	githubAuth   *auth.GitHubService
 	orgs         *orgs.Service
 	projects     *projects.Service
 	ingest       *ingest.Service
@@ -57,6 +59,7 @@ func New(d Deps) *Server {
 		cfg:          d.Config,
 		log:          d.Logger,
 		auth:         d.Auth,
+		githubAuth:   d.GitHubAuth,
 		orgs:         d.Orgs,
 		projects:     d.Projects,
 		ingest:       d.Ingest,

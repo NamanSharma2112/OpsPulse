@@ -34,6 +34,12 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GITHUB_REDIRECT_URL: ${GITHUB_REDIRECT_URL:-http://localhost:8080/v1/auth/github/callback}
+      TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY:-}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      # Must be reachable from GitHub; a tunnel URL in local development.
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8080}
+      SECURE_COOKIES: ${SECURE_COOKIES:-false}
     ports:
       - "${API_PORT:-8080}:8080"
     depends_on:
@@ -47,6 +53,9 @@ services:
     environment:
       # Server-side calls travel over the compose network, not localhost.
       OPSPULSE_API_URL: http://api:8080
+      # The browser follows the sign-in link itself, so it needs the API's
+      # published address rather than the compose hostname.
+      NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8080}
       OPSPULSE_API_TOKEN: ${OPSPULSE_API_TOKEN:-}
       OPSPULSE_PROJECT_ID: ${OPSPULSE_PROJECT_ID:-}
     ports:

@@ -15,6 +15,16 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("POST /v1/auth/register", s.handleRegister)
 	mux.HandleFunc("POST /v1/auth/login", s.handleLogin)
 	mux.Handle("GET /v1/auth/me", s.requireAuth(http.HandlerFunc(s.handleMe)))
+	mux.HandleFunc("GET /v1/auth/providers", s.handleAuthProviders)
+	mux.HandleFunc("POST /v1/auth/signout", s.handleSignOut)
+
+	// Sign in with GitHub. The callback redirects back to the dashboard with
+	// an httpOnly session cookie.
+	mux.HandleFunc("GET /v1/auth/github", s.handleGitHubAuthorize)
+	mux.HandleFunc("GET /v1/auth/github/callback", s.handleGitHubCallback)
+
+	// Repositories the signed-in user can administer on GitHub.
+	mux.Handle("GET /v1/github/repositories", s.requireAuth(http.HandlerFunc(s.handleListGitHubRepositories)))
 
 	// Organizations.
 	mux.Handle("GET /v1/organizations", s.requireAuth(http.HandlerFunc(s.handleListOrgs)))

@@ -5,14 +5,17 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/NamanSharma2112/OpsPulse/services/api/internal/auth"
 	"github.com/NamanSharma2112/OpsPulse/services/api/internal/config"
+	"github.com/NamanSharma2112/OpsPulse/services/api/internal/github"
 	"github.com/NamanSharma2112/OpsPulse/services/api/internal/httpapi"
 	"github.com/NamanSharma2112/OpsPulse/services/api/internal/ingest"
 	"github.com/NamanSharma2112/OpsPulse/services/api/internal/observability"
@@ -47,16 +50,39 @@ func run() error {
 	defer db.Close()
 	log.Info("connected to database")
 
+	box, err := auth.NewSecretBox(cfg.TokenEncryptionKey)
+	if err != nil {
+		return fmt.Errorf("token encryption: %w", err)
+	}
+
 	tokens := auth.NewTokenIssuer(cfg.JWTSecret, cfg.JWTTTL)
 	authSvc := auth.NewService(db.Users, tokens)
+	githubAuth := auth.NewGitHubService(github.OAuthConfig{
+		ClientID:      cfg.GitHubClientID,
+		ClientSecret:  cfg.GitHubSecret,
+		RedirectURL:   cfg.GitHubRedirectURL,
+		AuthorizeBase: cfg.GitHubOAuthBase,
+		APIBase:       cfg.GitHubAPIBase,
+		// admin:repo_hook is what lets OpsPulse install the webhook itself;
+		// repo is what lets it read private repositories.
+		Scopes: []string{"read:user", "user:email", "repo", "admin:repo_hook"},
+	}, db.Users, tokens, box)
+
 	orgSvc := orgs.NewService(db.Organizations)
-	projectSvc := projects.NewService(db.Projects, db.Repositories, orgSvc)
+	webhookURL := strings.TrimRight(cfg.PublicAPIURL, "/") + "/v1/webhooks/github"
+	projectSvc := projects.NewService(db.Projects, db.Repositories, orgSvc, githubAuth, webhookURL, log)
+
+	if !cfg.GitHubConfigured() {
+		log.Warn("GitHub OAuth is not configured; sign-in with GitHub and " +
+			"automatic webhook installation are unavailable")
+	}
 	ingestSvc := ingest.NewService(db.Events, db.Metrics, db.Deployments, db.PullRequests, db.Incidents, log)
 
 	server := httpapi.New(httpapi.Deps{
 		Config:       cfg,
 		Logger:       log,
 		Auth:         authSvc,
+		GitHubAuth:   githubAuth,
 		Orgs:         orgSvc,
 		Projects:     projectSvc,
 		Ingest:       ingestSvc,

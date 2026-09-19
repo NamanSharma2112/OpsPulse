@@ -43,6 +43,8 @@ type Repositories interface {
 	// GetByExternalID resolves the repository an incoming delivery belongs to.
 	GetByExternalID(ctx context.Context, provider, externalID string) (*domain.Repository, error)
 	ListForProject(ctx context.Context, projectID string) ([]domain.Repository, error)
+	RecordWebhook(ctx context.Context, repositoryID string, hookID int64) error
+	Delete(ctx context.Context, repositoryID string) error
 }
 
 // Events persists raw webhook deliveries.
