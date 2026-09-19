@@ -30,13 +30,16 @@ opspulse/
 
 ## Requirements
 
-Go 1.24+, Node 20+, and either Docker or a local PostgreSQL 16.
+Docker Desktop is all you need to run the stack. To work on the code outside
+containers you also want Go 1.24+ and Node 20+.
 
 ## Getting started
 
+Docker is the supported path on every platform, Windows included.
+
 ```bash
-cp .env.example .env
-make up          # postgres + api + dashboard
+cp .env.example .env     # PowerShell: copy .env.example .env
+docker compose up --build
 ```
 
 Postgres applies everything in `infra/migrations` the first time its volume
@@ -74,11 +77,23 @@ token above) in `.env`, and restart it.
 
 ## Running without Docker
 
+This path needs `psql` and `make` on your PATH, so it assumes macOS, Linux or
+WSL. On Windows use Docker above, or run these inside WSL.
+
 ```bash
 createdb opspulse
 make migrate-up                   # DATABASE_URL overridable
 make api                          # API on :8080
 npm install && make web           # dashboard on :3000
+```
+
+Without `make`, the same steps directly:
+
+```bash
+psql "$DATABASE_URL" -f infra/migrations/0001_init.up.sql
+psql "$DATABASE_URL" -f infra/migrations/0002_projections.up.sql
+cd services/api && go run ./cmd/api
+npm install && npm run dev
 ```
 
 ## Developing

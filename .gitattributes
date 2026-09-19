@@ -1,0 +1,8 @@
+# Normalise line endings. Several files in this repository are executed inside
+# Linux containers (the Postgres init script, the SQL it applies), and a CRLF
+# checkout on Windows breaks them with "bad interpreter: /bin/sh^M".
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary

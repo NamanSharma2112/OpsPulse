@@ -11,8 +11,10 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      # Applied in filename order the first time the volume is created.
-      - ./infra/migrations:/docker-entrypoint-initdb.d:ro
+      # Mounted outside the init directory so only the .up.sql files run;
+      # init-db.sh applies them in filename order on first start.
+      - ./infra/migrations:/migrations:ro
+      - ./infra/docker/init-db.sh:/docker-entrypoint-initdb.d/00-init.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U opspulse -d opspulse"]
       interval: 5s
