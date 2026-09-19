@@ -1,0 +1,7 @@
+BEGIN;
+
+DROP TABLE IF EXISTS incidents;
+DROP TABLE IF EXISTS pull_requests;
+DROP TABLE IF EXISTS deployments;
+
+COMMIT;

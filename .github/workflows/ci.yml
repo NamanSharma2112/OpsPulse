@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    name: Go API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache-dependency-path: services/api/go.sum
+
+      - name: Check formatting
+        working-directory: services/api
+        run: |
+          unformatted=$(gofmt -l ./cmd ./internal)
+          if [ -n "$unformatted" ]; then
+            echo "These files need gofmt:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Vet
+        working-directory: services/api
+        run: go vet ./...
+
+      - name: Test
+        working-directory: services/api
+        run: go test -race ./...
+
+      - name: Build
+        working-directory: services/api
+        run: go build ./...
+
+  web:
+    name: Dashboard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+  migrations:
+    name: Migrations
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: opspulse
+          POSTGRES_PASSWORD: opspulse
+          POSTGRES_DB: opspulse
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U opspulse"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      PGPASSWORD: opspulse
+      DATABASE_URL: postgres://opspulse:opspulse@localhost:5432/opspulse?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+
+      # Apply, roll back, and apply again: catches a down migration that does
+      # not actually undo its up migration.
+      - name: Apply
+        run: |
+          for f in infra/migrations/*.up.sql; do
+            echo "applying $f"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+
+      - name: Roll back
+        run: |
+          for f in $(ls -r infra/migrations/*.down.sql); do
+            echo "reverting $f"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+
+      - name: Re-apply
+        run: |
+          for f in infra/migrations/*.up.sql; do
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$f"
+          done

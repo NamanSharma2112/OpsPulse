@@ -1,0 +1,19 @@
+{
+  "name": "opspulse",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GitHub delivery and reliability dashboard",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @opspulse/web",
+    "build": "npm run build --workspace @opspulse/web",
+    "lint": "npm run lint --workspace @opspulse/web",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

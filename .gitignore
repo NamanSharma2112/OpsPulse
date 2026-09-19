@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+.vercel
+*.tsbuildinfo
+
+# Go
+bin/
+*.exe
+*.test
+*.out
+coverage.*
+
+# Environment — .env.example files are tracked, real secrets are not
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Editors and OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Build and test output
+dist/
+build/
+tmp/

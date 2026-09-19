@@ -1,0 +1,13 @@
+# Keep build contexts small and free of local state.
+.git
+.github
+node_modules
+**/node_modules
+**/.next
+**/dist
+docs
+infra/migrations
+*.md
+.env
+.env.*
+!.env.example
