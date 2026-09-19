@@ -15,8 +15,9 @@ type DeploymentRepo struct{ pool *pgxpool.Pool }
 // Upsert writes the current state of a deployment, keyed by its GitHub id.
 func (r *DeploymentRepo) Upsert(ctx context.Context, d *domain.Deployment) error {
 	const q = `INSERT INTO deployments
-			(project_id, external_id, environment, ref, sha, status, actor, url, started_at, finished_at)
-		VALUES ($1, $2, $3, $4, $5, $6, nullif($7, ''), nullif($8, ''), $9, $10)
+			(project_id, repository_id, external_id, environment, ref, commit_sha, status,
+			 actor, url, started_at, finished_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, nullif($8, ''), nullif($9, ''), $10, $11)
 		ON CONFLICT (project_id, external_id) DO UPDATE
 			SET status = excluded.status,
 			    environment = excluded.environment,
@@ -24,15 +25,15 @@ func (r *DeploymentRepo) Upsert(ctx context.Context, d *domain.Deployment) error
 			    url = coalesce(excluded.url, deployments.url),
 			    finished_at = coalesce(excluded.finished_at, deployments.finished_at)
 		RETURNING id`
-	err := r.pool.QueryRow(ctx, q, d.ProjectID, d.ExternalID, d.Environment, d.Ref, d.SHA,
-		d.Status, d.Actor, d.URL, d.StartedAt, d.FinishedAt).Scan(&d.ID)
+	err := r.pool.QueryRow(ctx, q, d.ProjectID, d.RepositoryID, d.ExternalID, d.Environment,
+		d.Ref, d.CommitSHA, d.Status, d.Actor, d.URL, d.StartedAt, d.FinishedAt).Scan(&d.ID)
 	return translate(err)
 }
 
 // ListForProject returns recent deployments, newest first.
 func (r *DeploymentRepo) ListForProject(ctx context.Context, projectID string, limit int) ([]domain.Deployment, error) {
-	const q = `SELECT id, project_id, external_id, environment, ref, sha, status,
-			coalesce(actor, ''), coalesce(url, ''), started_at, finished_at
+	const q = `SELECT id, project_id, repository_id, external_id, environment, ref, commit_sha,
+			status, coalesce(actor, ''), coalesce(url, ''), started_at, finished_at
 		FROM deployments WHERE project_id = $1 ORDER BY started_at DESC LIMIT $2`
 	rows, err := r.pool.Query(ctx, q, projectID, clampLimit(limit, 25, 200))
 	if err != nil {
@@ -43,8 +44,8 @@ func (r *DeploymentRepo) ListForProject(ctx context.Context, projectID string, l
 	out := []domain.Deployment{}
 	for rows.Next() {
 		var d domain.Deployment
-		if err := rows.Scan(&d.ID, &d.ProjectID, &d.ExternalID, &d.Environment, &d.Ref, &d.SHA,
-			&d.Status, &d.Actor, &d.URL, &d.StartedAt, &d.FinishedAt); err != nil {
+		if err := rows.Scan(&d.ID, &d.ProjectID, &d.RepositoryID, &d.ExternalID, &d.Environment,
+			&d.Ref, &d.CommitSHA, &d.Status, &d.Actor, &d.URL, &d.StartedAt, &d.FinishedAt); err != nil {
 			return nil, translate(err)
 		}
 		out = append(out, d)
@@ -58,8 +59,9 @@ type PullRequestRepo struct{ pool *pgxpool.Pool }
 // Upsert writes the current state of a pull request, keyed by its number.
 func (r *PullRequestRepo) Upsert(ctx context.Context, pr *domain.PullRequest) error {
 	const q = `INSERT INTO pull_requests
-			(project_id, number, title, author, state, draft, url, opened_at, merged_at, closed_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, nullif($7, ''), $8, $9, $10, now())
+			(project_id, repository_id, number, title, author, state, draft, url,
+			 opened_at, merged_at, closed_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, nullif($8, ''), $9, $10, $11, now())
 		ON CONFLICT (project_id, number) DO UPDATE
 			SET title = excluded.title,
 			    state = excluded.state,
@@ -68,15 +70,15 @@ func (r *PullRequestRepo) Upsert(ctx context.Context, pr *domain.PullRequest) er
 			    closed_at = coalesce(excluded.closed_at, pull_requests.closed_at),
 			    updated_at = now()
 		RETURNING id, updated_at`
-	err := r.pool.QueryRow(ctx, q, pr.ProjectID, pr.Number, pr.Title, pr.Author, pr.State, pr.Draft,
-		pr.URL, pr.OpenedAt, pr.MergedAt, pr.ClosedAt).Scan(&pr.ID, &pr.UpdatedAt)
+	err := r.pool.QueryRow(ctx, q, pr.ProjectID, pr.RepositoryID, pr.Number, pr.Title, pr.Author,
+		pr.State, pr.Draft, pr.URL, pr.OpenedAt, pr.MergedAt, pr.ClosedAt).Scan(&pr.ID, &pr.UpdatedAt)
 	return translate(err)
 }
 
 // ListForProject returns pull requests, optionally filtered by state.
 func (r *PullRequestRepo) ListForProject(ctx context.Context, projectID, state string, limit int) ([]domain.PullRequest, error) {
-	const q = `SELECT id, project_id, number, title, author, state, draft, coalesce(url, ''),
-			opened_at, merged_at, closed_at, updated_at
+	const q = `SELECT id, project_id, repository_id, number, title, author, state, draft,
+			coalesce(url, ''), opened_at, merged_at, closed_at, updated_at
 		FROM pull_requests
 		WHERE project_id = $1 AND ($2 = '' OR state = $2)
 		ORDER BY updated_at DESC LIMIT $3`
@@ -89,8 +91,9 @@ func (r *PullRequestRepo) ListForProject(ctx context.Context, projectID, state s
 	out := []domain.PullRequest{}
 	for rows.Next() {
 		var pr domain.PullRequest
-		if err := rows.Scan(&pr.ID, &pr.ProjectID, &pr.Number, &pr.Title, &pr.Author, &pr.State,
-			&pr.Draft, &pr.URL, &pr.OpenedAt, &pr.MergedAt, &pr.ClosedAt, &pr.UpdatedAt); err != nil {
+		if err := rows.Scan(&pr.ID, &pr.ProjectID, &pr.RepositoryID, &pr.Number, &pr.Title,
+			&pr.Author, &pr.State, &pr.Draft, &pr.URL, &pr.OpenedAt, &pr.MergedAt,
+			&pr.ClosedAt, &pr.UpdatedAt); err != nil {
 			return nil, translate(err)
 		}
 		out = append(out, pr)

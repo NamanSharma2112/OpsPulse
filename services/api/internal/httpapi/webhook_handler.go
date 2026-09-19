@@ -46,26 +46,29 @@ func (s *Server) handleGitHubWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	project, err := s.projects.GetByRepo(r.Context(), owner, name)
+	repo, err := s.projects.RepositoryByExternalID(r.Context(),
+		domain.ProviderGitHub, domain.GitHubExternalID(owner, name))
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			// The repository is not registered. Say so plainly rather than
+			// The repository is not connected. Say so plainly rather than
 			// failing: GitHub should stop retrying.
-			writeError(w, http.StatusNotFound, "no project registered for this repository")
+			writeError(w, http.StatusNotFound, "this repository is not connected to a project")
 			return
 		}
 		writeDomainError(w, s.log, err)
 		return
 	}
 
-	if err := gh.VerifySignature(project.WebhookSecret, body, r.Header.Get("X-Hub-Signature-256")); err != nil {
+	// The signature is checked against this repository's own secret, so a
+	// leak is contained to one repository.
+	if err := gh.VerifySignature(repo.WebhookSecret, body, r.Header.Get("X-Hub-Signature-256")); err != nil {
 		s.log.Warn("rejected webhook delivery",
-			"error", err, "project_id", project.ID, "delivery_id", deliveryID)
+			"error", err, "repository_id", repo.ID, "delivery_id", deliveryID)
 		writeError(w, http.StatusUnauthorized, "invalid delivery signature")
 		return
 	}
 
-	result, err := s.ingest.Handle(r.Context(), project, gh.Delivery{
+	result, err := s.ingest.Handle(r.Context(), repo, gh.Delivery{
 		ID:    deliveryID,
 		Event: eventType,
 		Body:  body,

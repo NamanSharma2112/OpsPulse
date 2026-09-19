@@ -14,11 +14,13 @@ type EventRepo struct{ pool *pgxpool.Pool }
 // Insert records a delivery. It returns false when the delivery id was seen
 // before, so callers can skip re-projecting a replayed webhook.
 func (r *EventRepo) Insert(ctx context.Context, e *domain.Event) (bool, error) {
-	const q = `INSERT INTO events (project_id, delivery_id, type, action, actor, payload, occurred_at)
-		VALUES ($1, $2, $3, nullif($4, ''), nullif($5, ''), $6, $7)
+	const q = `INSERT INTO events
+			(project_id, repository_id, source, delivery_id, type, action, actor, payload, occurred_at)
+		VALUES ($1, $2, $3, $4, $5, nullif($6, ''), nullif($7, ''), $8, $9)
 		ON CONFLICT (delivery_id) DO NOTHING
 		RETURNING id, received_at`
-	err := r.pool.QueryRow(ctx, q, e.ProjectID, e.DeliveryID, e.Type, e.Action, e.Actor, e.Payload, e.OccurredAt).
+	err := r.pool.QueryRow(ctx, q, e.ProjectID, e.RepositoryID, e.Source, e.DeliveryID,
+		e.Type, e.Action, e.Actor, e.Payload, e.OccurredAt).
 		Scan(&e.ID, &e.ReceivedAt)
 	if err != nil {
 		if translated := translate(err); translated == domain.ErrNotFound {
@@ -31,8 +33,8 @@ func (r *EventRepo) Insert(ctx context.Context, e *domain.Event) (bool, error) {
 
 // ListForProject returns the most recent deliveries, newest first.
 func (r *EventRepo) ListForProject(ctx context.Context, projectID string, limit int) ([]domain.Event, error) {
-	const q = `SELECT id, project_id, delivery_id, type, coalesce(action, ''), coalesce(actor, ''),
-			occurred_at, received_at
+	const q = `SELECT id, project_id, repository_id, source, delivery_id, type,
+			coalesce(action, ''), coalesce(actor, ''), occurred_at, received_at
 		FROM events
 		WHERE project_id = $1
 		ORDER BY occurred_at DESC
@@ -46,8 +48,8 @@ func (r *EventRepo) ListForProject(ctx context.Context, projectID string, limit 
 	out := []domain.Event{}
 	for rows.Next() {
 		var e domain.Event
-		if err := rows.Scan(&e.ID, &e.ProjectID, &e.DeliveryID, &e.Type, &e.Action, &e.Actor,
-			&e.OccurredAt, &e.ReceivedAt); err != nil {
+		if err := rows.Scan(&e.ID, &e.ProjectID, &e.RepositoryID, &e.Source, &e.DeliveryID,
+			&e.Type, &e.Action, &e.Actor, &e.OccurredAt, &e.ReceivedAt); err != nil {
 			return nil, translate(err)
 		}
 		out = append(out, e)

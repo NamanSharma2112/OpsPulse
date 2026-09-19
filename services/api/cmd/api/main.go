@@ -49,8 +49,8 @@ func run() error {
 
 	tokens := auth.NewTokenIssuer(cfg.JWTSecret, cfg.JWTTTL)
 	authSvc := auth.NewService(db.Users, tokens)
-	orgSvc := orgs.NewService(db.Orgs)
-	projectSvc := projects.NewService(db.Projects, orgSvc)
+	orgSvc := orgs.NewService(db.Organizations)
+	projectSvc := projects.NewService(db.Projects, db.Repositories, orgSvc)
 	ingestSvc := ingest.NewService(db.Events, db.Metrics, db.Deployments, db.PullRequests, db.Incidents, log)
 
 	server := httpapi.New(httpapi.Deps{

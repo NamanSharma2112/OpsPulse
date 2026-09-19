@@ -18,9 +18,10 @@ what is currently broken.
                     ▼
         ┌───────────────────────┐
         │      PostgreSQL       │
-        │  users · orgs ·       │
-        │  projects · events ·  │
-        │  metrics              │
+        │  users · organizations│
+        │  projects ·           │
+        │  repositories ·       │
+        │  events · metrics     │
         └───────────┬───────────┘
                     ▼
         ┌───────────────────────┐
@@ -38,12 +39,14 @@ under `packages/types`.
 
 1. GitHub posts a delivery to `POST /v1/webhooks/github`.
 2. The handler reads `X-GitHub-Event` and `X-GitHub-Delivery`, parses just
-   enough of the body to find `owner/repo`, and looks up the project.
-3. The delivery's `X-Hub-Signature-256` is checked against that project's
-   webhook secret. An unsigned or mis-signed delivery is rejected with 401
-   before anything is written.
-4. The raw payload is inserted into `events`. `delivery_id` is unique, so a
-   replayed delivery is recognised and skipped — ingest is idempotent.
+   enough of the body to find `owner/repo`, and resolves the **repository**
+   by `(provider, external_id)` — one indexed read.
+3. The delivery's `X-Hub-Signature-256` is checked against that repository's
+   own webhook secret. An unsigned or mis-signed delivery is rejected with
+   401 before anything is written.
+4. The raw payload is inserted into `events`, tagged with its `source` and
+   `repository_id`. `delivery_id` is unique, so a replayed delivery is
+   recognised and skipped — ingest is idempotent.
 5. The delivery is applied to the projections and to `metrics`.
 
 A projection failure is logged but does not fail the request: the event is
@@ -93,8 +96,9 @@ Two separate mechanisms, deliberately:
 - **GitHub** authenticates per delivery with an HMAC signature over the body.
   No user token is involved in ingest.
 
-Every project belongs to an org, and a user reaches a project only through
-`org_members`. A request for a project in an org the caller does not belong to
+Every project belongs to an organization, and a user reaches a project only
+through `organization_members`. Repositories inherit that reach through their
+project. A request for a project in an org the caller does not belong to
 returns 404 rather than 403, so the API does not confirm that a project
 exists to someone who cannot see it.
 

@@ -16,17 +16,19 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("POST /v1/auth/login", s.handleLogin)
 	mux.Handle("GET /v1/auth/me", s.requireAuth(http.HandlerFunc(s.handleMe)))
 
-	// Organisations.
-	mux.Handle("GET /v1/orgs", s.requireAuth(http.HandlerFunc(s.handleListOrgs)))
-	mux.Handle("POST /v1/orgs", s.requireAuth(http.HandlerFunc(s.handleCreateOrg)))
-	mux.Handle("GET /v1/orgs/{orgID}", s.requireAuth(http.HandlerFunc(s.handleGetOrg)))
-	mux.Handle("POST /v1/orgs/{orgID}/members", s.requireAuth(http.HandlerFunc(s.handleAddOrgMember)))
-	mux.Handle("GET /v1/orgs/{orgID}/projects", s.requireAuth(http.HandlerFunc(s.handleListOrgProjects)))
+	// Organizations.
+	mux.Handle("GET /v1/organizations", s.requireAuth(http.HandlerFunc(s.handleListOrgs)))
+	mux.Handle("POST /v1/organizations", s.requireAuth(http.HandlerFunc(s.handleCreateOrg)))
+	mux.Handle("GET /v1/organizations/{organizationID}", s.requireAuth(http.HandlerFunc(s.handleGetOrg)))
+	mux.Handle("POST /v1/organizations/{organizationID}/members", s.requireAuth(http.HandlerFunc(s.handleAddOrgMember)))
+	mux.Handle("GET /v1/organizations/{organizationID}/projects", s.requireAuth(http.HandlerFunc(s.handleListOrgProjects)))
 
-	// Projects.
+	// Projects and the repositories they watch.
 	mux.Handle("GET /v1/projects", s.requireAuth(http.HandlerFunc(s.handleListProjects)))
 	mux.Handle("POST /v1/projects", s.requireAuth(http.HandlerFunc(s.handleCreateProject)))
 	mux.Handle("GET /v1/projects/{projectID}", s.requireAuth(http.HandlerFunc(s.handleGetProject)))
+	mux.Handle("GET /v1/projects/{projectID}/repositories", s.requireAuth(http.HandlerFunc(s.handleListRepositories)))
+	mux.Handle("POST /v1/projects/{projectID}/repositories", s.requireAuth(http.HandlerFunc(s.handleConnectRepository)))
 
 	// Dashboard reads.
 	mux.Handle("GET /v1/projects/{projectID}/health", s.requireAuth(http.HandlerFunc(s.handleProjectHealth)))

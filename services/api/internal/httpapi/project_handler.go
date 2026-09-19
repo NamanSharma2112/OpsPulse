@@ -3,8 +3,6 @@ package httpapi
 import (
 	"net/http"
 	"strconv"
-
-	"github.com/NamanSharma2112/OpsPulse/services/api/internal/projects"
 )
 
 func (s *Server) handleListProjects(w http.ResponseWriter, r *http.Request) {
@@ -18,29 +16,50 @@ func (s *Server) handleListProjects(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleCreateProject(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		OrgID         string `json:"org_id"`
-		Name          string `json:"name"`
+		OrganizationID string `json:"organization_id"`
+		Name           string `json:"name"`
+	}
+	if !decodeJSON(w, r, &in) {
+		return
+	}
+	project, err := s.projects.Create(r.Context(), currentUser(r).ID, in.OrganizationID, in.Name)
+	if err != nil {
+		writeDomainError(w, s.log, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, project)
+}
+
+func (s *Server) handleListRepositories(w http.ResponseWriter, r *http.Request) {
+	list, err := s.projects.ListRepositories(r.Context(), currentUser(r).ID, r.PathValue("projectID"))
+	if err != nil {
+		writeDomainError(w, s.log, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"repositories": list})
+}
+
+// handleConnectRepository connects a GitHub repository to a project. The
+// response carries the webhook secret exactly once, so it can be pasted into
+// the repository's webhook settings; it is never served again.
+func (s *Server) handleConnectRepository(w http.ResponseWriter, r *http.Request) {
+	var in struct {
 		Repo          string `json:"repo"`
 		DefaultBranch string `json:"default_branch"`
 	}
 	if !decodeJSON(w, r, &in) {
 		return
 	}
-	project, secret, err := s.projects.Create(r.Context(), currentUser(r).ID, projects.CreateInput{
-		OrgID:         in.OrgID,
-		Name:          in.Name,
-		Repo:          in.Repo,
-		DefaultBranch: in.DefaultBranch,
-	})
+	repository, secret, err := s.projects.ConnectGitHub(r.Context(), currentUser(r).ID,
+		r.PathValue("projectID"), in.Repo, in.DefaultBranch)
 	if err != nil {
 		writeDomainError(w, s.log, err)
 		return
 	}
-	// webhook_secret is shown exactly once, so it can be pasted into the
-	// repository's webhook settings.
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"project":        project,
+		"repository":     repository,
 		"webhook_secret": secret,
+		"webhook_url":    "/v1/webhooks/github",
 	})
 }
 

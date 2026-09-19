@@ -60,7 +60,7 @@ export default async function HealthPage() {
           </div>
           <div className="tile-note">
             {h.last_deployment
-              ? `${h.last_deployment.environment} · ${shortSha(h.last_deployment.sha)}`
+              ? `${h.last_deployment.environment} · ${shortSha(h.last_deployment.commit_sha)}`
               : "No deployments recorded"}
           </div>
         </div>
@@ -103,7 +103,7 @@ export default async function HealthPage() {
               <Badge variant={d.status} />
               <div className="row-main">
                 <div className="row-title">
-                  {d.environment} · {shortSha(d.sha)}
+                  {d.environment} · {shortSha(d.commit_sha)}
                 </div>
                 <div className="row-meta">
                   {d.ref}

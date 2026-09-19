@@ -7,6 +7,7 @@ matching `.down.sql`, and each runs inside a single transaction.
 | --- | --- |
 | `0001_init` | `users`, `orgs`, `org_members`, `projects`, `events`, `metrics` |
 | `0002_projections` | `deployments`, `pull_requests`, `incidents` |
+| `0003_repositories` | `repositories`; renames `orgs`/`org_members` to `organizations`/`organization_members`; adds `events.source` and `repository_id` |
 
 ## Applying them
 

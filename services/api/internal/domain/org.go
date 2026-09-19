@@ -2,16 +2,16 @@ package domain
 
 import "time"
 
-// Roles a user can hold inside an organisation.
+// Roles a user can hold inside an organization.
 const (
 	RoleOwner  = "owner"
 	RoleAdmin  = "admin"
 	RoleMember = "member"
 )
 
-// Org groups projects and the people who can see them. It optionally mirrors
-// a GitHub organisation.
-type Org struct {
+// Organization groups projects and the people who can see them. It optionally
+// mirrors a GitHub organization.
+type Organization struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
 	Slug        string    `json:"slug"`
@@ -20,10 +20,10 @@ type Org struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-// Membership ties a user to an org with a role.
+// Membership ties a user to an organization with a role.
 type Membership struct {
-	OrgID     string    `json:"org_id"`
-	UserID    string    `json:"user_id"`
-	Role      string    `json:"role"`
-	CreatedAt time.Time `json:"created_at"`
+	OrganizationID string    `json:"organization_id"`
+	UserID         string    `json:"user_id"`
+	Role           string    `json:"role"`
+	CreatedAt      time.Time `json:"created_at"`
 }

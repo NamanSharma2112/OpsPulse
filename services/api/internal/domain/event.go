@@ -8,8 +8,13 @@ import (
 // Event is a raw GitHub webhook delivery, stored verbatim so projections can
 // always be rebuilt from the source of truth.
 type Event struct {
-	ID         string          `json:"id"`
-	ProjectID  string          `json:"project_id"`
+	ID        string `json:"id"`
+	ProjectID string `json:"project_id"`
+	// RepositoryID is unset for events that do not originate from a
+	// repository.
+	RepositoryID *string `json:"repository_id,omitempty"`
+	// Source names the system the event came from, e.g. "github".
+	Source     string          `json:"source"`
 	DeliveryID string          `json:"delivery_id"`
 	Type       string          `json:"type"`
 	Action     string          `json:"action,omitempty"`

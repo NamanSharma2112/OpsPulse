@@ -53,16 +53,18 @@ type Result struct {
 
 // Handle stores the delivery and applies it to the projections. Replayed
 // deliveries are recognised by their delivery id and skipped.
-func (s *Service) Handle(ctx context.Context, project *domain.Project, d github.Delivery, p *github.Payload) (Result, error) {
+func (s *Service) Handle(ctx context.Context, repo *domain.Repository, d github.Delivery, p *github.Payload) (Result, error) {
 	occurred := occurredAt(p)
 	event := &domain.Event{
-		ProjectID:  project.ID,
-		DeliveryID: d.ID,
-		Type:       d.Event,
-		Action:     p.Action,
-		Actor:      p.Sender.Login,
-		Payload:    json.RawMessage(d.Body),
-		OccurredAt: occurred,
+		ProjectID:    repo.ProjectID,
+		RepositoryID: &repo.ID,
+		Source:       repo.Provider,
+		DeliveryID:   d.ID,
+		Type:         d.Event,
+		Action:       p.Action,
+		Actor:        p.Sender.Login,
+		Payload:      json.RawMessage(d.Body),
+		OccurredAt:   occurred,
 	}
 
 	fresh, err := s.events.Insert(ctx, event)
@@ -70,47 +72,48 @@ func (s *Service) Handle(ctx context.Context, project *domain.Project, d github.
 		return Result{}, fmt.Errorf("store event: %w", err)
 	}
 	if !fresh {
-		s.log.Debug("duplicate delivery ignored", "delivery_id", d.ID, "project_id", project.ID)
+		s.log.Debug("duplicate delivery ignored", "delivery_id", d.ID, "repository_id", repo.ID)
 		return Result{Duplicate: true}, nil
 	}
 
-	if err := s.project(ctx, project, d.Event, p, occurred); err != nil {
+	if err := s.project(ctx, repo, d.Event, p, occurred); err != nil {
 		// The raw event is already safe in the database, so a projection
 		// failure is logged rather than failing the delivery: GitHub would
 		// otherwise retry an event we have already stored.
-		s.log.Error("projection failed", "error", err, "type", d.Event, "project_id", project.ID)
+		s.log.Error("projection failed", "error", err, "type", d.Event, "repository_id", repo.ID)
 	}
 	return Result{EventID: event.ID, Duplicate: false}, nil
 }
 
-func (s *Service) project(ctx context.Context, project *domain.Project, eventType string, p *github.Payload, occurred time.Time) error {
+func (s *Service) project(ctx context.Context, repo *domain.Repository, eventType string, p *github.Payload, occurred time.Time) error {
 	switch eventType {
 	case "deployment", "deployment_status":
-		return s.applyDeployment(ctx, project, p, occurred)
+		return s.applyDeployment(ctx, repo, p, occurred)
 	case "pull_request":
-		return s.applyPullRequest(ctx, project, p)
+		return s.applyPullRequest(ctx, repo, p)
 	case "workflow_run":
-		return s.applyWorkflowRun(ctx, project, p, occurred)
+		return s.applyWorkflowRun(ctx, repo, p, occurred)
 	case "issues":
-		return s.applyIssue(ctx, project, p, occurred)
+		return s.applyIssue(ctx, repo, p, occurred)
 	default:
 		return nil
 	}
 }
 
-func (s *Service) applyDeployment(ctx context.Context, project *domain.Project, p *github.Payload, occurred time.Time) error {
+func (s *Service) applyDeployment(ctx context.Context, repo *domain.Repository, p *github.Payload, occurred time.Time) error {
 	if p.Deployment == nil {
 		return nil
 	}
 	d := domain.Deployment{
-		ProjectID:   project.ID,
-		ExternalID:  strconv.FormatInt(p.Deployment.ID, 10),
-		Environment: firstNonEmpty(p.Deployment.Environment, "production"),
-		Ref:         p.Deployment.Ref,
-		SHA:         p.Deployment.SHA,
-		Status:      domain.DeploymentPending,
-		Actor:       firstNonEmpty(p.Deployment.Creator.Login, p.Sender.Login),
-		StartedAt:   nonZeroTime(p.Deployment.CreatedAt, occurred),
+		ProjectID:    repo.ProjectID,
+		RepositoryID: &repo.ID,
+		ExternalID:   strconv.FormatInt(p.Deployment.ID, 10),
+		Environment:  firstNonEmpty(p.Deployment.Environment, "production"),
+		Ref:          p.Deployment.Ref,
+		CommitSHA:    p.Deployment.SHA,
+		Status:       domain.DeploymentPending,
+		Actor:        firstNonEmpty(p.Deployment.Creator.Login, p.Sender.Login),
+		StartedAt:    nonZeroTime(p.Deployment.CreatedAt, occurred),
 	}
 
 	metric := domain.MetricDeploymentStarted
@@ -140,13 +143,13 @@ func (s *Service) applyDeployment(ctx context.Context, project *domain.Project, 
 	if metric == "" {
 		return nil
 	}
-	return s.record(ctx, project.ID, metric, 1, occurred, map[string]string{
+	return s.record(ctx, repo.ProjectID, metric, 1, occurred, map[string]string{
 		"environment": d.Environment,
 		"ref":         d.Ref,
 	})
 }
 
-func (s *Service) applyPullRequest(ctx context.Context, project *domain.Project, p *github.Payload) error {
+func (s *Service) applyPullRequest(ctx context.Context, repo *domain.Repository, p *github.Payload) error {
 	if p.PullRequest == nil {
 		return nil
 	}
@@ -156,16 +159,17 @@ func (s *Service) applyPullRequest(ctx context.Context, project *domain.Project,
 		state = "merged"
 	}
 	record := domain.PullRequest{
-		ProjectID: project.ID,
-		Number:    pr.Number,
-		Title:     pr.Title,
-		Author:    pr.User.Login,
-		State:     state,
-		Draft:     pr.Draft,
-		URL:       pr.HTMLURL,
-		OpenedAt:  pr.CreatedAt,
-		MergedAt:  pr.MergedAt,
-		ClosedAt:  pr.ClosedAt,
+		ProjectID:    repo.ProjectID,
+		RepositoryID: &repo.ID,
+		Number:       pr.Number,
+		Title:        pr.Title,
+		Author:       pr.User.Login,
+		State:        state,
+		Draft:        pr.Draft,
+		URL:          pr.HTMLURL,
+		OpenedAt:     pr.CreatedAt,
+		MergedAt:     pr.MergedAt,
+		ClosedAt:     pr.ClosedAt,
 	}
 	if err := s.pullRequests.Upsert(ctx, &record); err != nil {
 		return err
@@ -174,7 +178,7 @@ func (s *Service) applyPullRequest(ctx context.Context, project *domain.Project,
 	labels := map[string]string{"author": pr.User.Login}
 	switch {
 	case p.Action == "opened":
-		return s.record(ctx, project.ID, domain.MetricPullRequestOpened, 1, pr.CreatedAt, labels)
+		return s.record(ctx, repo.ProjectID, domain.MetricPullRequestOpened, 1, pr.CreatedAt, labels)
 	case p.Action == "closed" && pr.Merged:
 		at := time.Now().UTC()
 		if pr.MergedAt != nil {
@@ -182,12 +186,12 @@ func (s *Service) applyPullRequest(ctx context.Context, project *domain.Project,
 		}
 		// Lead time in hours is the headline delivery metric.
 		labels["lead_time_hours"] = strconv.FormatFloat(at.Sub(pr.CreatedAt).Hours(), 'f', 2, 64)
-		return s.record(ctx, project.ID, domain.MetricPullRequestMerged, 1, at, labels)
+		return s.record(ctx, repo.ProjectID, domain.MetricPullRequestMerged, 1, at, labels)
 	}
 	return nil
 }
 
-func (s *Service) applyWorkflowRun(ctx context.Context, project *domain.Project, p *github.Payload, occurred time.Time) error {
+func (s *Service) applyWorkflowRun(ctx context.Context, repo *domain.Repository, p *github.Payload, occurred time.Time) error {
 	run := p.WorkflowRun
 	if run == nil || run.Status != "completed" {
 		return nil
@@ -196,14 +200,14 @@ func (s *Service) applyWorkflowRun(ctx context.Context, project *domain.Project,
 
 	// Only runs on the default branch page the team: a failing feature branch
 	// is the author's problem, a failing default branch is an incident.
-	if run.HeadBranch != project.DefaultBranch {
+	if run.HeadBranch != repo.DefaultBranch {
 		return nil
 	}
 
 	switch run.Conclusion {
 	case "failure", "timed_out":
 		incident := domain.Incident{
-			ProjectID:  project.ID,
+			ProjectID:  repo.ProjectID,
 			ExternalID: externalID,
 			Title:      fmt.Sprintf("%s failed on %s", firstNonEmpty(run.Name, "Workflow"), run.HeadBranch),
 			Severity:   domain.SeverityMajor,
@@ -215,7 +219,7 @@ func (s *Service) applyWorkflowRun(ctx context.Context, project *domain.Project,
 		if err := s.incidents.Upsert(ctx, &incident); err != nil {
 			return err
 		}
-		return s.record(ctx, project.ID, domain.MetricIncidentOpened, 1, incident.OpenedAt, map[string]string{
+		return s.record(ctx, repo.ProjectID, domain.MetricIncidentOpened, 1, incident.OpenedAt, map[string]string{
 			"source": "workflow_run",
 			"branch": run.HeadBranch,
 		})
@@ -223,7 +227,7 @@ func (s *Service) applyWorkflowRun(ctx context.Context, project *domain.Project,
 		// A green run on the default branch clears the workflow incidents it
 		// raised earlier.
 		at := nonZeroTime(run.UpdatedAt, occurred)
-		if err := s.incidents.Resolve(ctx, project.ID, externalID, at); err != nil {
+		if err := s.incidents.Resolve(ctx, repo.ProjectID, externalID, at); err != nil {
 			return err
 		}
 		return nil
@@ -231,7 +235,7 @@ func (s *Service) applyWorkflowRun(ctx context.Context, project *domain.Project,
 	return nil
 }
 
-func (s *Service) applyIssue(ctx context.Context, project *domain.Project, p *github.Payload, occurred time.Time) error {
+func (s *Service) applyIssue(ctx context.Context, repo *domain.Repository, p *github.Payload, occurred time.Time) error {
 	if p.Issue == nil {
 		return nil
 	}
@@ -246,14 +250,14 @@ func (s *Service) applyIssue(ctx context.Context, project *domain.Project, p *gi
 		if p.Issue.ClosedAt != nil {
 			at = *p.Issue.ClosedAt
 		}
-		if err := s.incidents.Resolve(ctx, project.ID, externalID, at); err != nil {
+		if err := s.incidents.Resolve(ctx, repo.ProjectID, externalID, at); err != nil {
 			return err
 		}
-		return s.record(ctx, project.ID, domain.MetricIncidentResolved, 1, at, map[string]string{"source": "issue"})
+		return s.record(ctx, repo.ProjectID, domain.MetricIncidentResolved, 1, at, map[string]string{"source": "issue"})
 	}
 
 	incident := domain.Incident{
-		ProjectID:  project.ID,
+		ProjectID:  repo.ProjectID,
 		ExternalID: externalID,
 		Title:      p.Issue.Title,
 		Severity:   severity,
@@ -268,7 +272,7 @@ func (s *Service) applyIssue(ctx context.Context, project *domain.Project, p *gi
 	if p.Action != "opened" && p.Action != "labeled" {
 		return nil
 	}
-	return s.record(ctx, project.ID, domain.MetricIncidentOpened, 1, incident.OpenedAt, map[string]string{
+	return s.record(ctx, repo.ProjectID, domain.MetricIncidentOpened, 1, incident.OpenedAt, map[string]string{
 		"source":   "issue",
 		"severity": severity,
 	})

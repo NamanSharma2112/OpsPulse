@@ -32,11 +32,11 @@ export default async function DeploymentsPage() {
                 <div className="row-title">
                   {d.url ? (
                     <a href={d.url} target="_blank" rel="noreferrer">
-                      {d.environment} · {shortSha(d.sha)}
+                      {d.environment} · {shortSha(d.commit_sha)}
                     </a>
                   ) : (
                     <>
-                      {d.environment} · {shortSha(d.sha)}
+                      {d.environment} · {shortSha(d.commit_sha)}
                     </>
                   )}
                 </div>

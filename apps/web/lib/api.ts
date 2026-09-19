@@ -1,9 +1,11 @@
 import type {
   DeploymentList,
+  EventList,
   IncidentList,
   ProjectHealth,
   ProjectList,
   PullRequestList,
+  RepositoryList,
 } from "@opspulse/types";
 
 const API_URL = process.env.OPSPULSE_API_URL ?? "http://localhost:8080";
@@ -90,6 +92,15 @@ export function listPullRequests(
   const query = new URLSearchParams({ limit: String(limit) });
   if (state) query.set("state", state);
   return get<PullRequestList>(`/v1/projects/${projectID}/pull-requests?${query}`);
+}
+
+export function listRepositories(projectID: string): Promise<ApiResult<RepositoryList>> {
+  return get<RepositoryList>(`/v1/projects/${projectID}/repositories`);
+}
+
+/** The raw event feed — the source of truth every projection is built from. */
+export function listEvents(projectID: string, limit = 50): Promise<ApiResult<EventList>> {
+  return get<EventList>(`/v1/projects/${projectID}/events?limit=${limit}`);
 }
 
 export function listIncidents(

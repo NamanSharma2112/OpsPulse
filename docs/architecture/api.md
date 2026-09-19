@@ -34,32 +34,49 @@ curl -X POST localhost:8080/v1/auth/register \
 Returns `{ "token": "...", "expires_at": "...", "user": { ... } }`. The token
 is valid for `JWT_TTL` (24h by default).
 
-## Organisations
+## Organizations
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `GET` | `/v1/orgs` | Orgs the caller belongs to |
-| `POST` | `/v1/orgs` | Create an org; the caller becomes its owner |
-| `GET` | `/v1/orgs/{orgID}` | One org |
-| `POST` | `/v1/orgs/{orgID}/members` | Add a member (owner/admin only) |
-| `GET` | `/v1/orgs/{orgID}/projects` | Projects in the org |
+| `GET` | `/v1/organizations` | Organizations the caller belongs to |
+| `POST` | `/v1/organizations` | Create one; the caller becomes its owner |
+| `GET` | `/v1/organizations/{organizationID}` | One organization |
+| `POST` | `/v1/organizations/{organizationID}/members` | Add a member (owner/admin only) |
+| `GET` | `/v1/organizations/{organizationID}/projects` | Projects in it |
 
 ## Projects
 
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `GET` | `/v1/projects` | Every project the caller can see |
-| `POST` | `/v1/projects` | Start watching a repository |
+| `POST` | `/v1/projects` | Create a project |
 | `GET` | `/v1/projects/{projectID}` | One project |
 
 ```bash
 curl -X POST localhost:8080/v1/projects \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"org_id":"<uuid>","name":"OpsPulse","repo":"acme/opspulse","default_branch":"main"}'
+  -d '{"organization_id":"<uuid>","name":"OpsPulse"}'
 ```
 
-The response carries `webhook_secret` **once**. Configure it on the
+## Repositories
+
+A project watches one or more repositories. Creating a project no longer
+connects one — that is a second call.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/v1/projects/{projectID}/repositories` | Repositories the project watches |
+| `POST` | `/v1/projects/{projectID}/repositories` | Connect a GitHub repository |
+
+```bash
+curl -X POST localhost:8080/v1/projects/<uuid>/repositories \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"repo":"acme/opspulse","default_branch":"main"}'
+```
+
+The response carries `webhook_secret` **once**. Configure it on that
 repository's webhook; it is never returned again.
 
 ## Dashboard reads
@@ -73,6 +90,9 @@ All require bearer auth and membership of the project's org.
 | `GET` | `/v1/projects/{id}/pull-requests` | `?state=open\|closed\|merged`, `?limit=` |
 | `GET` | `/v1/projects/{id}/incidents` | `?status=open\|acknowledged\|resolved`, `?limit=` |
 | `GET` | `/v1/projects/{id}/events` | Raw deliveries, `?limit=` (default 50, max 500) |
+
+Each event carries `source` (the system it came from) and `repository_id`
+(the repository within it), alongside the verbatim payload.
 
 A project in an org the caller does not belong to returns **404**, not 403.
 
@@ -92,7 +112,7 @@ Responses:
 | `202` | Accepted. Body reports `duplicate: true` for a replayed delivery. |
 | `400` | Missing headers, unparseable body, or no repository in the payload. |
 | `401` | Missing or invalid signature. |
-| `404` | No project registered for that repository. |
+| `404` | That repository is not connected to a project. |
 
 Events understood today: `deployment`, `deployment_status`, `pull_request`,
 `workflow_run`, `issues`. Anything else is stored in `events` but projects

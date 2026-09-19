@@ -18,14 +18,15 @@ import (
 type DB struct {
 	Pool *pgxpool.Pool
 
-	Users        *UserRepo
-	Orgs         *OrgRepo
-	Projects     *ProjectRepo
-	Events       *EventRepo
-	Metrics      *MetricRepo
-	Deployments  *DeploymentRepo
-	PullRequests *PullRequestRepo
-	Incidents    *IncidentRepo
+	Users         *UserRepo
+	Organizations *OrganizationRepo
+	Projects      *ProjectRepo
+	Repositories  *RepositoryRepo
+	Events        *EventRepo
+	Metrics       *MetricRepo
+	Deployments   *DeploymentRepo
+	PullRequests  *PullRequestRepo
+	Incidents     *IncidentRepo
 }
 
 // Connect opens a pool and verifies the database answers.
@@ -50,15 +51,16 @@ func Connect(ctx context.Context, url string) (*DB, error) {
 	}
 
 	return &DB{
-		Pool:         pool,
-		Users:        &UserRepo{pool},
-		Orgs:         &OrgRepo{pool},
-		Projects:     &ProjectRepo{pool},
-		Events:       &EventRepo{pool},
-		Metrics:      &MetricRepo{pool},
-		Deployments:  &DeploymentRepo{pool},
-		PullRequests: &PullRequestRepo{pool},
-		Incidents:    &IncidentRepo{pool},
+		Pool:          pool,
+		Users:         &UserRepo{pool},
+		Organizations: &OrganizationRepo{pool},
+		Projects:      &ProjectRepo{pool},
+		Repositories:  &RepositoryRepo{pool},
+		Events:        &EventRepo{pool},
+		Metrics:       &MetricRepo{pool},
+		Deployments:   &DeploymentRepo{pool},
+		PullRequests:  &PullRequestRepo{pool},
+		Incidents:     &IncidentRepo{pool},
 	}, nil
 }
 

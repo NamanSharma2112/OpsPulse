@@ -6,6 +6,7 @@ const NAV = [
   { href: "/dashboard/deployments", label: "Deployments" },
   { href: "/dashboard/pull-requests", label: "Pull requests" },
   { href: "/dashboard/incidents", label: "Incidents" },
+  { href: "/dashboard/events", label: "Events" },
 ];
 
 /** Shell for the signed-in product. Keeps its own dark theme. */

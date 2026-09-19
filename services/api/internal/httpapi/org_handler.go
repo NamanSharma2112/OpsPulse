@@ -12,7 +12,7 @@ func (s *Server) handleListOrgs(w http.ResponseWriter, r *http.Request) {
 		writeDomainError(w, s.log, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"orgs": list})
+	writeJSON(w, http.StatusOK, map[string]any{"organizations": list})
 }
 
 func (s *Server) handleCreateOrg(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +32,7 @@ func (s *Server) handleCreateOrg(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleGetOrg(w http.ResponseWriter, r *http.Request) {
-	org, err := s.orgs.Get(r.Context(), currentUser(r).ID, r.PathValue("orgID"))
+	org, err := s.orgs.Get(r.Context(), currentUser(r).ID, r.PathValue("organizationID"))
 	if err != nil {
 		writeDomainError(w, s.log, err)
 		return
@@ -51,7 +51,7 @@ func (s *Server) handleAddOrgMember(w http.ResponseWriter, r *http.Request) {
 	if in.Role == "" {
 		in.Role = domain.RoleMember
 	}
-	err := s.orgs.AddMember(r.Context(), currentUser(r).ID, r.PathValue("orgID"), in.UserID, in.Role)
+	err := s.orgs.AddMember(r.Context(), currentUser(r).ID, r.PathValue("organizationID"), in.UserID, in.Role)
 	if err != nil {
 		writeDomainError(w, s.log, err)
 		return
@@ -60,7 +60,7 @@ func (s *Server) handleAddOrgMember(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleListOrgProjects(w http.ResponseWriter, r *http.Request) {
-	list, err := s.projects.ListForOrg(r.Context(), currentUser(r).ID, r.PathValue("orgID"))
+	list, err := s.projects.ListForOrganization(r.Context(), currentUser(r).ID, r.PathValue("organizationID"))
 	if err != nil {
 		writeDomainError(w, s.log, err)
 		return

@@ -18,23 +18,31 @@ type Users interface {
 	UpsertGitHub(ctx context.Context, u *domain.User) error
 }
 
-// Orgs persists organisations and their membership.
-type Orgs interface {
-	Create(ctx context.Context, o *domain.Org) error
-	GetByID(ctx context.Context, id string) (*domain.Org, error)
-	GetBySlug(ctx context.Context, slug string) (*domain.Org, error)
-	ListForUser(ctx context.Context, userID string) ([]domain.Org, error)
-	AddMember(ctx context.Context, orgID, userID, role string) error
-	RoleOf(ctx context.Context, orgID, userID string) (string, error)
+// Organizations persists organizations and their membership.
+type Organizations interface {
+	Create(ctx context.Context, o *domain.Organization) error
+	GetByID(ctx context.Context, id string) (*domain.Organization, error)
+	GetBySlug(ctx context.Context, slug string) (*domain.Organization, error)
+	ListForUser(ctx context.Context, userID string) ([]domain.Organization, error)
+	AddMember(ctx context.Context, organizationID, userID, role string) error
+	RoleOf(ctx context.Context, organizationID, userID string) (string, error)
 }
 
-// Projects persists watched repositories.
+// Projects persists projects.
 type Projects interface {
 	Create(ctx context.Context, p *domain.Project) error
 	GetByID(ctx context.Context, id string) (*domain.Project, error)
-	GetByRepo(ctx context.Context, owner, name string) (*domain.Project, error)
-	ListForOrg(ctx context.Context, orgID string) ([]domain.Project, error)
+	ListForOrganization(ctx context.Context, organizationID string) ([]domain.Project, error)
 	ListForUser(ctx context.Context, userID string) ([]domain.Project, error)
+}
+
+// Repositories persists the source repositories a project watches.
+type Repositories interface {
+	Create(ctx context.Context, r *domain.Repository) error
+	GetByID(ctx context.Context, id string) (*domain.Repository, error)
+	// GetByExternalID resolves the repository an incoming delivery belongs to.
+	GetByExternalID(ctx context.Context, provider, externalID string) (*domain.Repository, error)
+	ListForProject(ctx context.Context, projectID string) ([]domain.Repository, error)
 }
 
 // Events persists raw webhook deliveries.

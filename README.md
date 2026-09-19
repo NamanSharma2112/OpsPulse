@@ -54,13 +54,17 @@ TOKEN=$(curl -sS -X POST localhost:8080/v1/auth/register \
   -d '{"email":"you@example.com","name":"You","password":"a-long-password"}' \
   | jq -r .token)
 
-ORG=$(curl -sS -X POST localhost:8080/v1/orgs \
+ORG=$(curl -sS -X POST localhost:8080/v1/organizations \
   -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
   -d '{"name":"Acme"}' | jq -r .id)
 
-curl -sS -X POST localhost:8080/v1/projects \
+PROJECT=$(curl -sS -X POST localhost:8080/v1/projects \
   -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d "{\"org_id\":\"$ORG\",\"name\":\"OpsPulse\",\"repo\":\"acme/opspulse\"}"
+  -d "{\"organization_id\":\"$ORG\",\"name\":\"OpsPulse\"}" | jq -r .id)
+
+curl -sS -X POST localhost:8080/v1/projects/$PROJECT/repositories \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"repo":"acme/opspulse","default_branch":"main"}'
 ```
 
 The response includes `webhook_secret` **once**. In the repository's
@@ -150,10 +154,38 @@ The signed-in dashboard keeps its own dark theme, scoped to `.dash` in
 - [Migrations](infra/migrations/README.md) — schema conventions
 - [DESIGN.md](DESIGN.md) — the design system the marketing site implements
 
+## Data model
+
+```
+users ── organization_members ── organizations
+                                      │
+                                   projects
+                                      │
+                         ┌────────────┼────────────┐
+                    repositories    events      projections
+                                   (raw, append-only)
+                                                 deployments
+                                                 pull_requests
+                                                 incidents
+                                                 metrics
+```
+
+`events` is deliberately generic — one table holding every delivery verbatim,
+rather than a table per event type. Projections are derived from it and can be
+rebuilt by replaying it. See
+[decision 0002](docs/decisions/0002-events-as-source-of-truth.md) and
+[decision 0004](docs/decisions/0004-repositories-as-their-own-table.md).
+
 ## Status
 
-Early. The ingest pipeline, tenancy model, dashboard reads and schema are in
-place and tested end to end, and the landing page is built.
+**M1 — working GitHub integration: complete end to end.** Sign up → create
+organization → create project → connect repository → GitHub delivers →
+signature verified → stored in Postgres → visible on the dashboard. Verified
+against a real Postgres, including replay suppression and rejection of
+unsigned deliveries and unknown repositories.
+
+The one gap in that flow is the front end: every step before the dashboard is
+an API call, because there is no sign-up, organization or repository UI yet.
 
 The landing page's hero demo runs on fixed sample scenarios, not live data —
 it illustrates the pipeline rather than reading from it. The correlation and
@@ -161,5 +193,6 @@ AI-explanation stages it depicts are the product direction; the API today
 records events, projections and metric samples, and the statistical and
 explanation stages are not implemented yet.
 
-Also not built: GitHub OAuth sign-in, interactive sign-in in the dashboard,
-backfill from the GitHub REST API, and a retention policy for `events`.
+Also not built: GitHub OAuth sign-in, automatic webhook installation through
+the GitHub API (the secret is pasted in by hand today), backfill from the
+GitHub REST API, and a retention policy for `events`.

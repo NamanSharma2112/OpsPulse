@@ -25,7 +25,7 @@ export interface Session {
 
 export type OrgRole = "owner" | "admin" | "member";
 
-export interface Org {
+export interface Organization {
   id: string;
   name: string;
   slug: string;
@@ -36,11 +36,21 @@ export interface Org {
 
 export interface Project {
   id: string;
-  org_id: string;
+  organization_id: string;
   name: string;
   slug: string;
-  repo_owner: string;
-  repo_name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** A source repository a project watches. */
+export interface Repository {
+  id: string;
+  project_id: string;
+  provider: "github";
+  /** The provider's own identifier — "owner/name" for GitHub. */
+  external_id: string;
+  name: string;
   default_branch: string;
   created_at: string;
   updated_at: string;
@@ -56,10 +66,11 @@ export type DeploymentStatus =
 export interface Deployment {
   id: string;
   project_id: string;
+  repository_id?: string;
   external_id: string;
   environment: string;
   ref: string;
-  sha: string;
+  commit_sha: string;
   status: DeploymentStatus;
   actor?: string;
   url?: string;
@@ -72,6 +83,7 @@ export type PullRequestState = "open" | "closed" | "merged";
 export interface PullRequest {
   id: string;
   project_id: string;
+  repository_id?: string;
   number: number;
   title: string;
   author: string;
@@ -100,9 +112,13 @@ export interface Incident {
   resolved_at?: string;
 }
 
+/** A raw webhook delivery, stored verbatim and never mutated. */
 export interface OpsEvent {
   id: string;
   project_id: string;
+  repository_id?: string;
+  /** The system the event came from, e.g. "github". */
+  source: string;
   delivery_id: string;
   type: string;
   action?: string;
@@ -134,7 +150,8 @@ export interface ApiError {
 
 // Collection envelopes returned by the list endpoints.
 export interface ProjectList { projects: Project[] }
-export interface OrgList { orgs: Org[] }
+export interface OrganizationList { organizations: Organization[] }
+export interface RepositoryList { repositories: Repository[] }
 export interface DeploymentList { deployments: Deployment[] }
 export interface PullRequestList { pull_requests: PullRequest[] }
 export interface IncidentList { incidents: Incident[] }
