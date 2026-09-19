@@ -1,43 +1,35 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "OpsPulse",
-  description: "Delivery and reliability signals for your GitHub repositories",
-};
+/*
+ * Saans and SaansMono are proprietary. DESIGN.md names Inter at weight 500
+ * as the closest free substitute, with JetBrains Mono for the mono role.
+ */
+const sans = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
 
-const NAV = [
-  { href: "/", label: "Health" },
-  { href: "/deployments", label: "Deployments" },
-  { href: "/pull-requests", label: "Pull requests" },
-  { href: "/incidents", label: "Incidents" },
-];
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+});
+
+export const metadata: Metadata = {
+  title: "OpsPulse — Engineering & Business Operations Intelligence",
+  description:
+    "OpsPulse turns raw engineering and business signals into human-readable incidents: correlation detection, statistical rules, and an explanation you can act on.",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body>
-        <div className="shell">
-          <header className="masthead">
-            <Link href="/" className="brand">
-              <span className="brand-mark">◆</span>
-              <span>OpsPulse</span>
-              <span className="brand-sub">delivery &amp; reliability</span>
-            </Link>
-            <nav className="nav">
-              {NAV.map((item) => (
-                <Link key={item.href} href={item.href}>
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          </header>
-          <main>{children}</main>
-        </div>
-      </body>
+    <html lang="en" className={`${sans.variable} ${mono.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }

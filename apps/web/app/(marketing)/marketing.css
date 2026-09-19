@@ -1,0 +1,1005 @@
+/*
+ * Marketing surface. Follows DESIGN.md: cream canvas anchors the page, white
+ * cards lift off it for hierarchy, hairline borders instead of shadows,
+ * charcoal as the system primary, and Fin Orange reserved for AI surfaces.
+ */
+
+.mk {
+  background: var(--canvas);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.5;
+  overflow-x: clip;
+}
+
+.mk-container {
+  width: 100%;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Type scale ---------------------------------------------------------------
+   Weight 500 carries display; tracking pulls negative in proportion to size. */
+.mk-display-xl {
+  font-size: clamp(38px, 6.2vw, 72px);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.028em;
+  margin: 0;
+}
+
+.mk-display-lg {
+  font-size: clamp(32px, 4.6vw, 56px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+
+.mk-display-md {
+  font-size: clamp(26px, 3.2vw, 40px);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.mk-card-title {
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.014em;
+  margin: 0;
+}
+
+.mk-body-lg {
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: -0.006em;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+.mk-body {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+.mk-body-sm {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+.mk-caption {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-subtle);
+  margin: 0;
+}
+
+/* Sentence case, weight 500, never all-caps tracked. */
+.mk-eyebrow {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--ink-muted);
+  margin: 0 0 var(--s-md);
+}
+
+.mk-mono {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Buttons — 8px radius, never pill ---------------------------------------- */
+.mk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 10px 18px;
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.2;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.mk-btn-primary {
+  background: var(--ink);
+  color: var(--on-primary);
+}
+
+.mk-btn-primary:hover {
+  background: var(--inverse-canvas);
+}
+
+.mk-btn-secondary {
+  background: var(--surface-1);
+  color: var(--ink);
+  border-color: var(--hairline);
+}
+
+.mk-btn-secondary:hover {
+  background: var(--surface-2);
+}
+
+.mk-btn-tertiary {
+  background: transparent;
+  color: var(--ink);
+}
+
+.mk-btn-tertiary:hover {
+  background: var(--surface-2);
+}
+
+/* Navigation -------------------------------------------------------------- */
+.mk-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--canvas) 80%, transparent);
+  border-bottom: 1px solid transparent;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* On scroll the bar solidifies and grows a hairline. */
+.mk-nav[data-scrolled="true"] {
+  background: color-mix(in srgb, var(--canvas) 96%, transparent);
+  backdrop-filter: saturate(180%) blur(12px);
+  border-bottom-color: var(--hairline);
+}
+
+.mk-nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-lg);
+  height: 64px;
+}
+
+.mk-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.mk-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mk-nav-links a {
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  font-size: 14px;
+  color: var(--ink-muted);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.mk-nav-links a:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
+.mk-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-xs);
+}
+
+.mk-nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  color: var(--ink);
+}
+
+.mk-nav-mobile {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s-xs) 0 var(--s-md);
+  border-top: 1px solid var(--hairline-soft);
+}
+
+.mk-nav-mobile a {
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  font-size: 15px;
+  color: var(--ink-muted);
+}
+
+.mk-nav-mobile a:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* Sections ---------------------------------------------------------------- */
+.mk-section {
+  padding: var(--s-section) 0;
+}
+
+.mk-section-tight {
+  padding: 56px 0;
+}
+
+.mk-section-head {
+  max-width: 720px;
+  margin-bottom: var(--s-xxl);
+}
+
+.mk-section-head .mk-body-lg {
+  margin-top: var(--s-md);
+}
+
+/* Hero -------------------------------------------------------------------- */
+.mk-hero {
+  padding: clamp(48px, 7vw, 88px) 0 var(--s-section);
+}
+
+.mk-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: clamp(32px, 5vw, 64px);
+  align-items: center;
+}
+
+.mk-hero-copy .mk-body-lg {
+  margin-top: var(--s-lg);
+  max-width: 46ch;
+}
+
+.mk-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-sm);
+  margin-top: var(--s-xl);
+}
+
+.mk-hero-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-md);
+  margin-top: var(--s-lg);
+}
+
+.mk-hero-note span {
+  font-size: 13px;
+  color: var(--ink-subtle);
+}
+
+/* Chips ------------------------------------------------------------------- */
+.mk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px 5px 9px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  background: var(--surface-1);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.mk-chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--fin-orange);
+}
+
+/* Product mockup card — 16px radius, the protagonist of each section ------- */
+.mk-mockup {
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+}
+
+.mk-mockup-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-sm);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--hairline-soft);
+  background: var(--surface-1);
+}
+
+.mk-mockup-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.mk-mockup-dots i {
+  width: 9px;
+  height: 9px;
+  border-radius: var(--r-pill);
+  background: var(--hairline);
+}
+
+.mk-mockup-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.mk-mockup-body {
+  padding: var(--s-md);
+}
+
+/* Integration marquee ----------------------------------------------------- */
+.mk-marquee {
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  padding: var(--s-xl) 0;
+  background: var(--surface-1);
+}
+
+.mk-marquee-label {
+  text-align: center;
+  margin-bottom: var(--s-lg);
+}
+
+.mk-marquee-track {
+  display: flex;
+  overflow: hidden;
+  /* Fade the edges so the loop reads as continuous. */
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.mk-marquee-row {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--s-xxl);
+  padding-right: var(--s-xxl);
+  animation: mk-scroll 42s linear infinite;
+}
+
+.mk-marquee-track:hover .mk-marquee-row {
+  animation-play-state: paused;
+}
+
+@keyframes mk-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.mk-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  color: var(--ink-muted);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.mk-marquee-row:hover .mk-logo {
+  color: var(--ink-tertiary);
+}
+
+.mk-logo:hover {
+  color: var(--ink);
+}
+
+.mk-logo svg {
+  flex-shrink: 0;
+}
+
+/* Bento ------------------------------------------------------------------- */
+.mk-bento-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s-lg);
+  align-items: start;
+}
+
+.mk-bento-col {
+  display: grid;
+  gap: var(--s-lg);
+}
+
+.mk-bento {
+  position: relative;
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  padding: var(--s-lg);
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.2s ease;
+}
+
+.mk-bento[data-visible="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+.mk-bento:hover {
+  border-color: var(--ink-tertiary);
+}
+
+.mk-bento-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-sm);
+  margin-bottom: var(--s-sm);
+}
+
+.mk-bento-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-md);
+  background: var(--canvas);
+  color: var(--ink);
+  flex-shrink: 0;
+}
+
+.mk-bento p {
+  margin-top: var(--s-xs);
+}
+
+.mk-bento-visual {
+  margin-top: var(--s-md);
+  padding-top: var(--s-md);
+  border-top: 1px solid var(--hairline-soft);
+}
+
+/* Sparkline bars inside a bento box. */
+.mk-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  height: 64px;
+}
+
+.mk-bars i {
+  flex: 1;
+  border-radius: var(--r-xs) var(--r-xs) 0 0;
+  background: var(--surface-2);
+  transform-origin: bottom;
+  transform: scaleY(0);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mk-bento[data-visible="true"] .mk-bars i {
+  transform: scaleY(1);
+}
+
+.mk-bars i[data-flag="true"] {
+  background: var(--ink);
+}
+
+/* Correlation rows. */
+.mk-corr {
+  display: grid;
+  gap: var(--s-xs);
+}
+
+.mk-corr-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-sm);
+}
+
+.mk-corr-name {
+  width: 108px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.mk-corr-bar {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.mk-corr-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--w, 0%);
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mk-bento[data-visible="true"] .mk-corr-bar span {
+  transform: scaleX(1);
+}
+
+.mk-corr-value {
+  width: 38px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--ink-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Pipeline ---------------------------------------------------------------- */
+.mk-pipeline {
+  display: grid;
+  gap: 0;
+}
+
+.mk-step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-md);
+  padding: 14px 16px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.45s ease, transform 0.45s ease, border-color 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.mk-pipeline[data-visible="true"] .mk-step {
+  opacity: 1;
+  transform: none;
+}
+
+.mk-step-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--hairline);
+  background: var(--canvas);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.mk-step-title {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.mk-step-note {
+  display: block;
+  font-size: 13px;
+  color: var(--ink-subtle);
+  margin-top: 2px;
+}
+
+/* The connector between steps. */
+.mk-step-link {
+  display: flex;
+  justify-content: center;
+  height: 22px;
+  color: var(--hairline);
+}
+
+.mk-pipeline[data-visible="true"] .mk-step-link {
+  color: var(--ink-tertiary);
+}
+
+/* The AI step is the one place Fin Orange is allowed. */
+.mk-step[data-accent="ai"] {
+  border-color: color-mix(in srgb, var(--fin-orange) 40%, var(--hairline));
+}
+
+.mk-step[data-accent="ai"] .mk-step-index {
+  border-color: color-mix(in srgb, var(--fin-orange) 45%, transparent);
+  background: color-mix(in srgb, var(--fin-orange) 10%, transparent);
+  color: var(--fin-orange);
+}
+
+.mk-step[data-accent="ai"] .mk-step-title {
+  color: var(--fin-orange);
+}
+
+/* The final step inverts to charcoal: it is the output the page argues for. */
+.mk-step[data-accent="output"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-primary);
+}
+
+.mk-step[data-accent="output"] .mk-step-index {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--on-primary);
+}
+
+.mk-step[data-accent="output"] .mk-step-note {
+  color: var(--inverse-ink-muted);
+}
+
+/* Closing CTA ------------------------------------------------------------- */
+.mk-cta {
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-xxl);
+  padding: clamp(32px, 5vw, 48px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-xl);
+  flex-wrap: wrap;
+}
+
+.mk-cta-copy {
+  max-width: 52ch;
+}
+
+.mk-cta-copy .mk-body {
+  margin-top: var(--s-sm);
+}
+
+.mk-cta-actions {
+  display: flex;
+  gap: var(--s-sm);
+  flex-wrap: wrap;
+}
+
+/* Footer ------------------------------------------------------------------ */
+.mk-footer {
+  border-top: 1px solid var(--hairline);
+  padding: 64px 0 40px;
+}
+
+.mk-footer-grid {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(3, 1fr);
+  gap: var(--s-xl);
+}
+
+.mk-footer-col h4 {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  margin: 0 0 var(--s-sm);
+}
+
+.mk-footer-col ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.mk-footer-col a {
+  font-size: 13px;
+  color: var(--ink-subtle);
+  transition: color 0.15s ease;
+}
+
+.mk-footer-col a:hover {
+  color: var(--ink);
+}
+
+.mk-footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-md);
+  flex-wrap: wrap;
+  margin-top: var(--s-xxl);
+  padding-top: var(--s-lg);
+  border-top: 1px solid var(--hairline-soft);
+}
+
+/* Responsive -------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .mk-hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mk-bento-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mk-footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .mk-nav-links,
+  .mk-nav-actions .mk-btn-tertiary {
+    display: none;
+  }
+
+  .mk-nav-toggle {
+    display: inline-flex;
+  }
+
+  .mk-nav[data-open="true"] .mk-nav-mobile {
+    display: flex;
+  }
+
+  .mk-section {
+    padding: 64px 0;
+  }
+
+  .mk-hero {
+    padding: 32px 0 64px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mk-footer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mk-cta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Hero live demo ----------------------------------------------------------
+   A working miniature of the product, framed as a product-mockup card. */
+.demo .mk-mockup-bar {
+  justify-content: space-between;
+}
+
+.demo-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--ink-subtle);
+}
+
+.demo-live i {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--semantic-success, #0bdf50);
+  animation: demo-pulse 2s ease-in-out infinite;
+}
+
+@keyframes demo-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.demo-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: var(--canvas);
+  margin-bottom: var(--s-md);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.demo-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* Selected tab lifts onto white, as the pricing-tab pattern does. */
+.demo-tab {
+  flex: 1;
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.demo-tab[data-active="true"] {
+  background: var(--surface-1);
+  color: var(--ink);
+}
+
+.demo-signals {
+  display: grid;
+  gap: 2px;
+}
+
+.demo-signal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px 46px;
+  align-items: center;
+  gap: var(--s-sm);
+  padding: 9px 10px;
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  color: var(--ink-tertiary);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.35s ease, transform 0.35s ease, border-color 0.3s ease,
+    background-color 0.3s ease, color 0.3s ease;
+}
+
+.demo-signal[data-revealed="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* A signal that clears the correlation threshold is promoted to charcoal. */
+.demo-signal[data-correlated="true"] {
+  background: var(--canvas);
+  border-color: var(--hairline);
+  color: var(--ink);
+}
+
+.demo-signal-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.demo-signal-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.demo-signal-delta {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--ink-subtle);
+}
+
+.demo-spark {
+  width: 100%;
+  height: 32px;
+}
+
+.demo-signal-corr {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  text-align: right;
+  color: var(--ink-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+.demo-stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-md);
+  margin: var(--s-md) 0;
+  padding: 10px;
+  border-radius: var(--r-md);
+  background: var(--canvas);
+}
+
+.demo-stage {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  transition: color 0.25s ease;
+}
+
+.demo-stage[data-state="active"] {
+  color: var(--ink);
+}
+
+.demo-stage[data-state="done"] {
+  color: var(--ink-muted);
+}
+
+.demo-output {
+  border-top: 1px solid var(--hairline-soft);
+  padding-top: var(--s-md);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.demo-output[data-visible="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+.demo-output-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-sm);
+  margin-bottom: var(--s-xs);
+}
+
+.demo-sev {
+  padding: 2px 8px;
+  border-radius: var(--r-xs);
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid var(--hairline);
+  color: var(--ink-muted);
+  background: var(--canvas);
+}
+
+.demo-sev[data-sev="critical"] {
+  color: var(--semantic-error);
+  border-color: color-mix(in srgb, var(--semantic-error) 35%, transparent);
+  background: color-mix(in srgb, var(--semantic-error) 8%, transparent);
+}
+
+.demo-window {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--ink-subtle);
+}
+
+.demo-headline {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+}
+
+.demo-explanation {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-muted);
+}
+
+.demo-impact {
+  margin: 8px 0 0;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--ink-subtle);
+}
+
+@media (max-width: 520px) {
+  .demo-signal {
+    grid-template-columns: minmax(0, 1fr) 72px 40px;
+  }
+}

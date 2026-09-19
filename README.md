@@ -16,7 +16,7 @@ GitHub webhooks ──▶ Go API ──▶ PostgreSQL ──▶ Next.js dashboar
 
 ```
 opspulse/
-├── apps/web/          Next.js dashboard (App Router, server components)
+├── apps/web/          Next.js app — marketing site at /, dashboard at /dashboard
 ├── services/api/      Go API: auth, projects, webhook ingest, reads
 ├── packages/types/    TypeScript contracts shared with the dashboard
 ├── infra/
@@ -40,7 +40,8 @@ make up          # postgres + api + dashboard
 ```
 
 Postgres applies everything in `infra/migrations` the first time its volume
-is created. The API is on `:8080`, the dashboard on `:3000`.
+is created. The API is on `:8080`; the web app is on `:3000`, serving the
+landing page at `/` and the dashboard at `/dashboard`.
 
 Create an account and start watching a repository:
 
@@ -110,6 +111,21 @@ The API reads its configuration from the environment:
 The dashboard reads `OPSPULSE_API_URL`, `OPSPULSE_API_TOKEN` and the optional
 `OPSPULSE_PROJECT_ID`. See `apps/web/.env.example`.
 
+## Design
+
+The marketing surface follows `DESIGN.md` at the repository root — an
+Intercom-derived editorial system: a cream canvas (`#f5f1ec`) rather than
+white, white cards lifting off it with hairline borders instead of shadows,
+charcoal as the system primary, and the accent orange reserved for AI
+surfaces. Tokens live in `apps/web/app/globals.css`; the marketing styles in
+`apps/web/app/(marketing)/marketing.css` reference them and nothing else.
+
+Saans is proprietary, so the build substitutes Inter (weight 500 for display)
+and JetBrains Mono, both self-hosted through `next/font`.
+
+The signed-in dashboard keeps its own dark theme, scoped to `.dash` in
+`apps/web/app/(app)/dashboard.css`.
+
 ## Documentation
 
 - [Architecture overview](docs/architecture/overview.md) — the write path, the
@@ -117,10 +133,18 @@ The dashboard reads `OPSPULSE_API_URL`, `OPSPULSE_API_TOKEN` and the optional
 - [API reference](docs/architecture/api.md) — every endpoint
 - [Decision records](docs/decisions/) — why things are the way they are
 - [Migrations](infra/migrations/README.md) — schema conventions
+- [DESIGN.md](DESIGN.md) — the design system the marketing site implements
 
 ## Status
 
 Early. The ingest pipeline, tenancy model, dashboard reads and schema are in
-place and tested end to end. Not yet built: GitHub OAuth sign-in, interactive
-sign-in in the dashboard, backfill from the GitHub REST API, and a retention
-policy for the `events` table.
+place and tested end to end, and the landing page is built.
+
+The landing page's hero demo runs on fixed sample scenarios, not live data —
+it illustrates the pipeline rather than reading from it. The correlation and
+AI-explanation stages it depicts are the product direction; the API today
+records events, projections and metric samples, and the statistical and
+explanation stages are not implemented yet.
+
+Also not built: GitHub OAuth sign-in, interactive sign-in in the dashboard,
+backfill from the GitHub REST API, and a retention policy for `events`.
