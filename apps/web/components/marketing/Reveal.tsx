@@ -1,39 +1,34 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { motion, useInView, useReducedMotion } from "motion/react";
+import { useRef } from "react";
+import { EASE_OUT, inViewOnce } from "./motion";
 
 /**
- * Sets data-visible on its child wrapper the first time it scrolls into view,
- * which is what drives the bento and pipeline entrance animations. Falls back
- * to visible when IntersectionObserver is unavailable.
+ * Reveals its children once, the first time they scroll into view. Used for
+ * section headers and the closing panel — marketing surfaces only, never
+ * functional UI somebody visits daily.
  */
-export function useReveal<T extends HTMLElement>(threshold = 0.25) {
-  const ref = useRef<T>(null);
-  const [visible, setVisible] = useState(false);
+export function Reveal({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, inViewOnce);
+  const reduce = useReducedMotion();
 
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    if (typeof IntersectionObserver === "undefined") {
-      setVisible(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setVisible(true);
-            observer.disconnect();
-          }
-        }
-      },
-      { threshold, rootMargin: "0px 0px -8% 0px" },
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [threshold]);
-
-  return { ref, visible };
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      initial={reduce ? { opacity: 0 } : { opacity: 0, transform: "translateY(12px)" }}
+      animate={inView ? { opacity: 1, transform: "translateY(0px)" } : undefined}
+      transition={{ duration: 0.45, ease: EASE_OUT }}
+    >
+      {children}
+    </motion.div>
+  );
 }

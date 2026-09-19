@@ -54,6 +54,18 @@
   --s-section: 96px;
 
   --container: 1280px;
+
+  /* Easing. The browser's built-in curves are too weak for UI; these are the
+     strong equivalents. Never ease-in on an entrance — it delays the exact
+     moment the user is watching. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+
+  /* Duration. UI motion stays under 300ms; marketing reveals may run longer. */
+  --dur-press: 140ms;
+  --dur-hover: 180ms;
+  --dur-ui: 220ms;
+  --dur-reveal: 420ms;
 }
 
 *,
@@ -89,6 +101,11 @@ button {
 }
 
 /* Honour a reduced-motion preference everywhere. */
+/*
+ * Reduced motion keeps opacity and colour transitions, which carry meaning,
+ * and drops movement. Elements that animate in must still end up visible, so
+ * transforms are neutralised rather than the transition being removed.
+ */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -99,6 +116,8 @@ button {
   *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
+    transition-property: opacity, color, background-color, border-color !important;
+    transition-duration: 160ms !important;
+    transform: none !important;
   }
 }

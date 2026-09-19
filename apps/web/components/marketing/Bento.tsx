@@ -1,63 +1,62 @@
 "use client";
 
-import { useReveal } from "./Reveal";
+import { motion, useInView, useReducedMotion } from "motion/react";
+import { useRef } from "react";
+import { group, inViewOnce, item, itemStill } from "./motion";
 
 /*
- * Two bento tiles that animate in on scroll. Each carries a small live
- * visual rather than an icon, so the tile shows the behaviour it describes.
+ * Two tiles that reveal once on scroll. Each carries a small visual that
+ * performs the behaviour it describes rather than an icon that represents it.
  */
 
 export function BentoDetection() {
-  const { ref, visible } = useReveal<HTMLDivElement>();
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, inViewOnce);
+  const reduce = useReducedMotion();
 
   // The last four buckets are the anomaly the detector flags.
   const bars = [38, 44, 40, 47, 42, 45, 41, 46, 78, 92, 97, 88];
 
   return (
-    <div className="mk-bento" ref={ref} data-visible={visible}>
-      <div className="mk-bento-head">
-        <span className="mk-bento-icon">
-          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-            <path
-              d="M1.5 11.5h2.2l1.6-6 2.2 9 1.8-7 1.4 4h3.8"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </span>
-        <h3 className="mk-card-title">Detect what actually moved</h3>
-      </div>
+    <motion.div
+      className="mk-bento"
+      ref={ref}
+      variants={reduce ? itemStill : item}
+      initial="hidden"
+      animate={inView ? "shown" : "hidden"}
+    >
+      <h3 className="mk-card-title">Detect what actually moved</h3>
       <p className="mk-body-sm">
         Every metric gets a baseline from its own history, not a threshold
-        somebody guessed in 2019. OpsPulse flags the deviation and leaves the
-        ordinary noise alone.
+        somebody guessed in 2019.
       </p>
+
       <div className="mk-bento-visual">
         <div className="mk-bars">
           {bars.map((height, i) => (
-            <i
+            <motion.i
               key={i}
               data-flag={height > 60}
-              style={{
-                height: `${height}%`,
-                transitionDelay: `${i * 45}ms`,
+              style={{ height: `${height}%` }}
+              initial={reduce ? false : { transform: "scaleY(0)" }}
+              animate={inView ? { transform: "scaleY(1)" } : undefined}
+              transition={{
+                duration: 0.4,
+                ease: [0.23, 1, 0.32, 1],
+                delay: 0.1 + i * 0.03,
               }}
             />
           ))}
         </div>
-        <p className="mk-caption" style={{ marginTop: 10 }}>
-          4 of 12 buckets outside the expected band
-        </p>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export function BentoCorrelation() {
-  const { ref, visible } = useReveal<HTMLDivElement>();
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, inViewOnce);
+  const reduce = useReducedMotion();
 
   const rows = [
     { name: "Deploy 9f3c1ab", value: 0.97 },
@@ -67,47 +66,51 @@ export function BentoCorrelation() {
   ];
 
   return (
-    <div className="mk-bento" ref={ref} data-visible={visible}>
-      <div className="mk-bento-head">
-        <span className="mk-bento-icon">
-          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-            <path
-              d="M6.5 9.5a3 3 0 0 0 4.2 0l2-2a3 3 0 0 0-4.2-4.2l-.8.8M9.5 6.5a3 3 0 0 0-4.2 0l-2 2a3 3 0 0 0 4.2 4.2l.8-.8"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </span>
-        <h3 className="mk-card-title">Connect it to a cause</h3>
-      </div>
+    <motion.div
+      className="mk-bento"
+      ref={ref}
+      variants={reduce ? itemStill : item}
+      initial="hidden"
+      animate={inView ? "shown" : "hidden"}
+    >
+      <h3 className="mk-card-title">Connect it to a cause</h3>
       <p className="mk-body-sm">
-        Engineering signals and business signals share one timeline, so a
-        latency spike and a revenue dip stop being two separate investigations.
+        Engineering and business signals share one timeline, so a latency spike
+        and a revenue dip stop being two investigations.
       </p>
+
       <div className="mk-bento-visual">
         <div className="mk-corr">
           {rows.map((row, i) => (
             <div className="mk-corr-row" key={row.name}>
               <span className="mk-corr-name">{row.name}</span>
               <span className="mk-corr-bar">
-                <span
-                  style={{
-                    ["--w" as string]: `${Math.round(row.value * 100)}%`,
-                    transitionDelay: `${i * 90}ms`,
+                <motion.span
+                  initial={reduce ? false : { transform: "scaleX(0)" }}
+                  animate={inView ? { transform: "scaleX(1)" } : undefined}
+                  transition={{
+                    duration: 0.5,
+                    ease: [0.23, 1, 0.32, 1],
+                    delay: 0.1 + i * 0.06,
                   }}
+                  style={{ width: `${Math.round(row.value * 100)}%` }}
                 />
               </span>
               <span className="mk-corr-value">{row.value.toFixed(2)}</span>
             </div>
           ))}
         </div>
-        <p className="mk-caption" style={{ marginTop: 10 }}>
-          Ranked by correlation against the anomaly window
-        </p>
       </div>
-    </div>
+    </motion.div>
+  );
+}
+
+/** Wraps the pair so they cascade rather than arrive together. */
+export function BentoColumn() {
+  return (
+    <motion.div className="mk-bento-col" variants={group} initial="hidden" animate="shown">
+      <BentoDetection />
+      <BentoCorrelation />
+    </motion.div>
   );
 }

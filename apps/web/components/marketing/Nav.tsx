@@ -1,22 +1,29 @@
 "use client";
 
 import Link from "next/link";
+import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
+import { indicator } from "./motion";
 
 const LINKS = [
   { href: "#how-it-works", label: "How it works" },
   { href: "#integrations", label: "Integrations" },
-  { href: "#pipeline", label: "Pipeline" },
-  { href: "/dashboard", label: "Live dashboard" },
+  { href: "/dashboard", label: "Dashboard" },
 ];
 
 /**
  * Sticky top bar. It sits transparent over the cream canvas and solidifies
- * with a hairline once the page scrolls, per DESIGN.md's top-nav.
+ * with a hairline once the page scrolls.
+ *
+ * The hovered link is marked by one pill that travels between them, rather
+ * than each link lighting its own background — one object moving reads as a
+ * single response to the pointer.
  */
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -34,18 +41,27 @@ export function Nav() {
             OpsPulse
           </Link>
 
-          <nav className="mk-nav-links">
+          <nav className="mk-nav-links" onMouseLeave={() => setHovered(null)}>
             {LINKS.map((link) => (
-              <Link key={link.href} href={link.href}>
-                {link.label}
+              <Link
+                key={link.href}
+                href={link.href}
+                className="mk-nav-link"
+                onMouseEnter={() => setHovered(link.href)}
+              >
+                {hovered === link.href && !reduce ? (
+                  <motion.span
+                    layoutId="mk-nav-hover"
+                    className="mk-nav-link-bg"
+                    transition={indicator}
+                  />
+                ) : null}
+                <span className="mk-nav-link-label">{link.label}</span>
               </Link>
             ))}
           </nav>
 
           <div className="mk-nav-actions">
-            <Link href="/dashboard" className="mk-btn mk-btn-tertiary">
-              Sign in
-            </Link>
             <Link href="/dashboard" className="mk-btn mk-btn-primary">
               Get started
             </Link>
@@ -58,19 +74,9 @@ export function Nav() {
             >
               <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
                 {open ? (
-                  <path
-                    d="M3 3l10 10M13 3L3 13"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
+                  <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 ) : (
-                  <path
-                    d="M2 4h12M2 8h12M2 12h12"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
+                  <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 )}
               </svg>
             </button>

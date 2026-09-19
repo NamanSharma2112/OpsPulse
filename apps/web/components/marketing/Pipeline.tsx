@@ -1,12 +1,16 @@
 "use client";
 
-import { useReveal } from "./Reveal";
+import { motion, useInView, useReducedMotion } from "motion/react";
+import { useRef } from "react";
+import { EASE_OUT, STAGGER, inViewOnce } from "./motion";
 
 /*
  * The six stages between a raw number and something a person can act on.
- * Steps stagger in on scroll; the AI stage is the one place Fin Orange
- * appears, and the final stage inverts to charcoal because it is the output
- * the whole page argues for.
+ *
+ * The numbers carry the sequence, so there are no connector arrows between
+ * the steps — the stagger does that work instead. Fin Orange appears only on
+ * the AI stage, which is the accent's documented use; the last stage inverts
+ * to charcoal because it is the output the page argues for.
  */
 
 type Step = {
@@ -16,68 +20,37 @@ type Step = {
 };
 
 const STEPS: Step[] = [
-  {
-    title: "Raw Metrics",
-    note: "Deploys, latency, errors, paging, revenue — pulled from the systems you already run.",
-  },
-  {
-    title: "Feature Extraction",
-    note: "Each series is normalised into rates, deltas and rolling baselines.",
-  },
-  {
-    title: "Rule / Statistical Engine",
-    note: "Deterministic rules catch the known failures; statistics catch the rest.",
-  },
-  {
-    title: "Correlation Detection",
-    note: "Signals that moved together in the same window are ranked against the anomaly.",
-  },
-  {
-    title: "AI Explanation",
-    note: "The ranked evidence — never raw logs — is turned into a written cause.",
-    accent: "ai",
-  },
-  {
-    title: "Human-readable Incident",
-    note: "One paragraph an on-call engineer and a finance lead can both act on.",
-    accent: "output",
-  },
+  { title: "Raw Metrics", note: "Deploys, latency, errors, revenue" },
+  { title: "Feature Extraction", note: "Rates, deltas, rolling baselines" },
+  { title: "Rule / Statistical Engine", note: "Known failures by rule, the rest by statistics" },
+  { title: "Correlation Detection", note: "What moved together, ranked" },
+  { title: "AI Explanation", note: "Ranked evidence becomes a written cause", accent: "ai" },
+  { title: "Human-readable Incident", note: "One paragraph anyone can act on", accent: "output" },
 ];
 
 export function Pipeline() {
-  const { ref, visible } = useReveal<HTMLDivElement>(0.15);
+  const ref = useRef<HTMLOListElement>(null);
+  const inView = useInView(ref, inViewOnce);
+  const reduce = useReducedMotion();
 
   return (
-    <div className="mk-pipeline" ref={ref} data-visible={visible}>
+    <ol className="mk-pipeline" ref={ref}>
       {STEPS.map((step, i) => (
-        <div key={step.title}>
-          <div
-            className="mk-step"
-            data-accent={step.accent}
-            style={{ transitionDelay: `${i * 90}ms` }}
-          >
-            <span className="mk-step-index">{i + 1}</span>
-            <span>
-              <span className="mk-step-title">{step.title}</span>
-              <span className="mk-step-note">{step.note}</span>
-            </span>
-          </div>
-          {i < STEPS.length - 1 ? (
-            <span className="mk-step-link" aria-hidden="true">
-              <svg width="12" height="22" viewBox="0 0 12 22">
-                <path
-                  d="M6 2v14m0 0 3.2-3.4M6 16l-3.2-3.4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-          ) : null}
-        </div>
+        <motion.li
+          key={step.title}
+          className="mk-step"
+          data-accent={step.accent}
+          initial={reduce ? { opacity: 0 } : { opacity: 0, transform: "translateY(10px)" }}
+          animate={inView ? { opacity: 1, transform: "translateY(0px)" } : undefined}
+          transition={{ duration: 0.4, ease: EASE_OUT, delay: i * STAGGER }}
+        >
+          <span className="mk-step-index">{i + 1}</span>
+          <span className="mk-step-body">
+            <span className="mk-step-title">{step.title}</span>
+            <span className="mk-step-note">{step.note}</span>
+          </span>
+        </motion.li>
       ))}
-    </div>
+    </ol>
   );
 }

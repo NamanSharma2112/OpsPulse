@@ -2,6 +2,11 @@
  * Marketing surface. Follows DESIGN.md: cream canvas anchors the page, white
  * cards lift off it for hierarchy, hairline borders instead of shadows,
  * charcoal as the system primary, and Fin Orange reserved for AI surfaces.
+ *
+ * Division of labour with Motion: CSS owns hover and press, because a
+ * transition is the cheapest thing that works. Motion owns entrances, exits
+ * and the indicators that travel between elements. Anything animated here
+ * names its properties — never `transition: all`.
  */
 
 .mk {
@@ -22,23 +27,25 @@
 /* Type scale ---------------------------------------------------------------
    Weight 500 carries display; tracking pulls negative in proportion to size. */
 .mk-display-xl {
-  font-size: clamp(38px, 6.2vw, 72px);
+  font-size: clamp(36px, 4.8vw, 56px);
   font-weight: 500;
   line-height: 1.05;
   letter-spacing: -0.028em;
   margin: 0;
+  max-width: 17ch;
 }
 
 .mk-display-lg {
-  font-size: clamp(32px, 4.6vw, 56px);
+  font-size: clamp(28px, 3.4vw, 42px);
   font-weight: 500;
   line-height: 1.1;
   letter-spacing: -0.025em;
   margin: 0;
+  max-width: 20ch;
 }
 
 .mk-display-md {
-  font-size: clamp(26px, 3.2vw, 40px);
+  font-size: clamp(24px, 3vw, 34px);
   font-weight: 500;
   line-height: 1.15;
   letter-spacing: -0.02em;
@@ -46,32 +53,32 @@
 }
 
 .mk-card-title {
-  font-size: 22px;
+  font-size: 19px;
   font-weight: 500;
-  line-height: 1.25;
+  line-height: 1.3;
   letter-spacing: -0.014em;
   margin: 0;
 }
 
 .mk-body-lg {
   font-size: 18px;
-  font-weight: 400;
-  line-height: 1.5;
+  line-height: 1.55;
   letter-spacing: -0.006em;
   color: var(--ink-muted);
   margin: 0;
+  max-width: 44ch;
 }
 
 .mk-body {
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.55;
   color: var(--ink-muted);
   margin: 0;
 }
 
 .mk-body-sm {
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.55;
   color: var(--ink-muted);
   margin: 0;
 }
@@ -85,17 +92,10 @@
 
 /* Sentence case, weight 500, never all-caps tracked. */
 .mk-eyebrow {
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.3;
-  color: var(--ink-muted);
-  margin: 0 0 var(--s-md);
-}
-
-.mk-mono {
-  font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 13px;
-  line-height: 1.5;
+  font-weight: 500;
+  color: var(--ink-subtle);
+  margin: 0 0 12px;
 }
 
 /* Buttons — 8px radius, never pill ---------------------------------------- */
@@ -103,7 +103,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
   min-height: 40px;
   padding: 10px 18px;
   border-radius: var(--r-md);
@@ -111,17 +110,23 @@
   font-size: 15px;
   font-weight: 500;
   line-height: 1.2;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   white-space: nowrap;
+  transition:
+    background-color var(--dur-hover) ease,
+    border-color var(--dur-hover) ease,
+    color var(--dur-hover) ease,
+    transform var(--dur-press) var(--ease-out);
+}
+
+/* Press feedback. The interface confirms it heard the click before anything
+   else happens. */
+.mk-btn:active {
+  transform: scale(0.97);
 }
 
 .mk-btn-primary {
   background: var(--ink);
   color: var(--on-primary);
-}
-
-.mk-btn-primary:hover {
-  background: var(--inverse-canvas);
 }
 
 .mk-btn-secondary {
@@ -130,17 +135,15 @@
   border-color: var(--hairline);
 }
 
-.mk-btn-secondary:hover {
-  background: var(--surface-2);
-}
+@media (hover: hover) and (pointer: fine) {
+  .mk-btn-primary:hover {
+    background: var(--inverse-canvas);
+  }
 
-.mk-btn-tertiary {
-  background: transparent;
-  color: var(--ink);
-}
-
-.mk-btn-tertiary:hover {
-  background: var(--surface-2);
+  .mk-btn-secondary:hover {
+    background: var(--surface-2);
+    border-color: var(--ink-tertiary);
+  }
 }
 
 /* Navigation -------------------------------------------------------------- */
@@ -150,12 +153,12 @@
   z-index: 50;
   background: color-mix(in srgb, var(--canvas) 80%, transparent);
   border-bottom: 1px solid transparent;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition: background-color var(--dur-ui) ease, border-color var(--dur-ui) ease;
 }
 
 /* On scroll the bar solidifies and grows a hairline. */
 .mk-nav[data-scrolled="true"] {
-  background: color-mix(in srgb, var(--canvas) 96%, transparent);
+  background: color-mix(in srgb, var(--canvas) 94%, transparent);
   backdrop-filter: saturate(180%) blur(12px);
   border-bottom-color: var(--hairline);
 }
@@ -181,20 +184,34 @@
 .mk-nav-links {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
-.mk-nav-links a {
+/* One pill travels between links (Motion layoutId), so the link itself only
+   changes colour. */
+.mk-nav-link {
+  position: relative;
   padding: 8px 12px;
-  border-radius: var(--r-md);
   font-size: 14px;
   color: var(--ink-muted);
-  transition: color 0.15s ease, background-color 0.15s ease;
+  transition: color var(--dur-hover) ease;
 }
 
-.mk-nav-links a:hover {
-  color: var(--ink);
+.mk-nav-link-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-md);
   background: var(--surface-2);
+}
+
+.mk-nav-link-label {
+  position: relative;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mk-nav-link:hover {
+    color: var(--ink);
+  }
 }
 
 .mk-nav-actions {
@@ -213,6 +230,11 @@
   border-radius: var(--r-md);
   background: var(--surface-1);
   color: var(--ink);
+  transition: transform var(--dur-press) var(--ease-out);
+}
+
+.mk-nav-toggle:active {
+  transform: scale(0.94);
 }
 
 .mk-nav-mobile {
@@ -230,63 +252,44 @@
   color: var(--ink-muted);
 }
 
-.mk-nav-mobile a:hover {
-  background: var(--surface-2);
-  color: var(--ink);
-}
-
 /* Sections ---------------------------------------------------------------- */
 .mk-section {
   padding: var(--s-section) 0;
 }
 
 .mk-section-tight {
-  padding: 56px 0;
+  padding: 0 0 var(--s-section);
 }
 
 .mk-section-head {
-  max-width: 720px;
-  margin-bottom: var(--s-xxl);
-}
-
-.mk-section-head .mk-body-lg {
-  margin-top: var(--s-md);
+  margin-bottom: 56px;
 }
 
 /* Hero -------------------------------------------------------------------- */
 .mk-hero {
-  padding: clamp(48px, 7vw, 88px) 0 var(--s-section);
+  padding: clamp(40px, 6vw, 72px) 0 var(--s-section);
 }
 
 .mk-hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
   gap: clamp(32px, 5vw, 64px);
   align-items: center;
 }
 
+.mk-hero-copy .mk-display-xl {
+  margin-top: 18px;
+}
+
 .mk-hero-copy .mk-body-lg {
-  margin-top: var(--s-lg);
-  max-width: 46ch;
+  margin-top: 18px;
 }
 
 .mk-hero-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-sm);
-  margin-top: var(--s-xl);
-}
-
-.mk-hero-note {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-md);
-  margin-top: var(--s-lg);
-}
-
-.mk-hero-note span {
-  font-size: 13px;
-  color: var(--ink-subtle);
+  margin-top: 28px;
 }
 
 /* Chips ------------------------------------------------------------------- */
@@ -324,7 +327,6 @@
   gap: var(--s-sm);
   padding: 12px 16px;
   border-bottom: 1px solid var(--hairline-soft);
-  background: var(--surface-1);
 }
 
 .mk-mockup-dots {
@@ -353,13 +355,13 @@
 .mk-marquee {
   border-top: 1px solid var(--hairline);
   border-bottom: 1px solid var(--hairline);
-  padding: var(--s-xl) 0;
+  padding: 28px 0;
   background: var(--surface-1);
 }
 
 .mk-marquee-label {
   text-align: center;
-  margin-bottom: var(--s-lg);
+  margin-bottom: 20px;
 }
 
 .mk-marquee-track {
@@ -370,17 +372,15 @@
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
 }
 
+/* Constant motion, so linear. A CSS animation rather than JS, because it runs
+   off the main thread and keeps moving while the page is still loading. */
 .mk-marquee-row {
   display: flex;
   flex-shrink: 0;
   align-items: center;
   gap: var(--s-xxl);
   padding-right: var(--s-xxl);
-  animation: mk-scroll 42s linear infinite;
-}
-
-.mk-marquee-track:hover .mk-marquee-row {
-  animation-play-state: paused;
+  animation: mk-scroll 46s linear infinite;
 }
 
 @keyframes mk-scroll {
@@ -396,25 +396,27 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 4px;
-  color: var(--ink-muted);
+  color: var(--ink-tertiary);
   font-size: 15px;
   font-weight: 500;
   letter-spacing: -0.01em;
   white-space: nowrap;
-  transition: color 0.15s ease;
-}
-
-.mk-marquee-row:hover .mk-logo {
-  color: var(--ink-tertiary);
-}
-
-.mk-logo:hover {
-  color: var(--ink);
+  transition: color var(--dur-hover) ease;
 }
 
 .mk-logo svg {
   flex-shrink: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  /* Hovering the strip pauses it and lets one name come forward. */
+  .mk-marquee-track:hover .mk-marquee-row {
+    animation-play-state: paused;
+  }
+
+  .mk-logo:hover {
+    color: var(--ink);
+  }
 }
 
 /* Bento ------------------------------------------------------------------- */
@@ -431,60 +433,36 @@
 }
 
 .mk-bento {
-  position: relative;
   background: var(--surface-1);
   border: 1px solid var(--hairline);
   border-radius: var(--r-lg);
   padding: var(--s-lg);
-  opacity: 0;
-  transform: translateY(16px);
-  transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.2s ease;
+  transition: border-color var(--dur-hover) ease;
 }
 
-.mk-bento[data-visible="true"] {
-  opacity: 1;
-  transform: none;
+.mk-bento .mk-body-sm {
+  margin-top: 8px;
+  max-width: 42ch;
 }
 
-.mk-bento:hover {
-  border-color: var(--ink-tertiary);
-}
-
-.mk-bento-head {
-  display: flex;
-  align-items: center;
-  gap: var(--s-sm);
-  margin-bottom: var(--s-sm);
-}
-
-.mk-bento-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--r-md);
-  background: var(--canvas);
-  color: var(--ink);
-  flex-shrink: 0;
-}
-
-.mk-bento p {
-  margin-top: var(--s-xs);
+@media (hover: hover) and (pointer: fine) {
+  .mk-bento:hover {
+    border-color: var(--ink-tertiary);
+  }
 }
 
 .mk-bento-visual {
-  margin-top: var(--s-md);
-  padding-top: var(--s-md);
+  margin-top: 20px;
+  padding-top: 20px;
   border-top: 1px solid var(--hairline-soft);
 }
 
-/* Sparkline bars inside a bento box. */
+/* Sparkline bars inside a bento box. Motion drives scaleY. */
 .mk-bars {
   display: flex;
   align-items: flex-end;
   gap: 5px;
-  height: 64px;
+  height: 60px;
 }
 
 .mk-bars i {
@@ -492,22 +470,16 @@
   border-radius: var(--r-xs) var(--r-xs) 0 0;
   background: var(--surface-2);
   transform-origin: bottom;
-  transform: scaleY(0);
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.mk-bento[data-visible="true"] .mk-bars i {
-  transform: scaleY(1);
 }
 
 .mk-bars i[data-flag="true"] {
   background: var(--ink);
 }
 
-/* Correlation rows. */
+/* Correlation rows. Motion drives scaleX. */
 .mk-corr {
   display: grid;
-  gap: var(--s-xs);
+  gap: 10px;
 }
 
 .mk-corr-row {
@@ -535,49 +507,38 @@
 .mk-corr-bar span {
   position: absolute;
   inset: 0 auto 0 0;
-  width: var(--w, 0%);
   border-radius: var(--r-pill);
   background: var(--ink);
-  transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.mk-bento[data-visible="true"] .mk-corr-bar span {
-  transform: scaleX(1);
 }
 
 .mk-corr-value {
-  width: 38px;
+  width: 34px;
   text-align: right;
   font-size: 12px;
   color: var(--ink-subtle);
   font-variant-numeric: tabular-nums;
 }
 
-/* Pipeline ---------------------------------------------------------------- */
+/* Pipeline ----------------------------------------------------------------
+   The numbers carry the sequence, so there are no connectors between steps. */
 .mk-pipeline {
   display: grid;
-  gap: 0;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .mk-step {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--s-md);
   padding: 14px 16px;
   border: 1px solid var(--hairline);
   border-radius: var(--r-lg);
   background: var(--surface-1);
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.45s ease, transform 0.45s ease, border-color 0.25s ease,
-    background-color 0.25s ease;
-}
-
-.mk-pipeline[data-visible="true"] .mk-step {
-  opacity: 1;
-  transform: none;
+  transition: border-color var(--dur-hover) ease;
 }
 
 .mk-step-index {
@@ -596,30 +557,28 @@
   font-variant-numeric: tabular-nums;
 }
 
+.mk-step-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .mk-step-title {
-  display: block;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
   letter-spacing: -0.01em;
 }
 
 .mk-step-note {
-  display: block;
   font-size: 13px;
   color: var(--ink-subtle);
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
-/* The connector between steps. */
-.mk-step-link {
-  display: flex;
-  justify-content: center;
-  height: 22px;
-  color: var(--hairline);
-}
-
-.mk-pipeline[data-visible="true"] .mk-step-link {
-  color: var(--ink-tertiary);
+@media (hover: hover) and (pointer: fine) {
+  .mk-step:hover {
+    border-color: var(--ink-tertiary);
+  }
 }
 
 /* The AI step is the one place Fin Orange is allowed. */
@@ -659,7 +618,7 @@
   background: var(--surface-1);
   border: 1px solid var(--hairline);
   border-radius: var(--r-xxl);
-  padding: clamp(32px, 5vw, 48px);
+  padding: clamp(28px, 4vw, 44px);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -668,11 +627,11 @@
 }
 
 .mk-cta-copy {
-  max-width: 52ch;
+  max-width: 46ch;
 }
 
 .mk-cta-copy .mk-body {
-  margin-top: var(--s-sm);
+  margin-top: 10px;
 }
 
 .mk-cta-actions {
@@ -684,12 +643,12 @@
 /* Footer ------------------------------------------------------------------ */
 .mk-footer {
   border-top: 1px solid var(--hairline);
-  padding: 64px 0 40px;
+  padding: 56px 0 36px;
 }
 
 .mk-footer-grid {
   display: grid;
-  grid-template-columns: 1.4fr repeat(3, 1fr);
+  grid-template-columns: 1.6fr repeat(3, 1fr);
   gap: var(--s-xl);
 }
 
@@ -697,7 +656,7 @@
   font-size: 13px;
   font-weight: 500;
   color: var(--ink);
-  margin: 0 0 var(--s-sm);
+  margin: 0 0 12px;
 }
 
 .mk-footer-col ul {
@@ -711,11 +670,14 @@
 .mk-footer-col a {
   font-size: 13px;
   color: var(--ink-subtle);
-  transition: color 0.15s ease;
+  transition: color var(--dur-hover) ease;
 }
 
-.mk-footer-col a:hover {
-  color: var(--ink);
+@media (hover: hover) and (pointer: fine) {
+  .mk-footer-col a:hover,
+  .mk-nav-mobile a:hover {
+    color: var(--ink);
+  }
 }
 
 .mk-footer-bottom {
@@ -723,17 +685,14 @@
   justify-content: space-between;
   gap: var(--s-md);
   flex-wrap: wrap;
-  margin-top: var(--s-xxl);
+  margin-top: 40px;
   padding-top: var(--s-lg);
   border-top: 1px solid var(--hairline-soft);
 }
 
 /* Responsive -------------------------------------------------------------- */
 @media (max-width: 1024px) {
-  .mk-hero-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
+  .mk-hero-grid,
   .mk-bento-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -744,8 +703,7 @@
 }
 
 @media (max-width: 768px) {
-  .mk-nav-links,
-  .mk-nav-actions .mk-btn-tertiary {
+  .mk-nav-links {
     display: none;
   }
 
@@ -761,8 +719,12 @@
     padding: 64px 0;
   }
 
+  .mk-section-tight {
+    padding: 0 0 64px;
+  }
+
   .mk-hero {
-    padding: 32px 0 64px;
+    padding: 28px 0 64px;
   }
 }
 
@@ -780,7 +742,7 @@
 /* Hero live demo ----------------------------------------------------------
    A working miniature of the product, framed as a product-mockup card. */
 .demo .mk-mockup-bar {
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .demo-live {
@@ -792,39 +754,42 @@
   color: var(--ink-subtle);
 }
 
+/* A slow opacity pulse. Decorative, off the main thread, and the only thing
+   on the page that loops. */
 .demo-live i {
   width: 6px;
   height: 6px;
   border-radius: var(--r-pill);
   background: var(--semantic-success, #0bdf50);
-  animation: demo-pulse 2s ease-in-out infinite;
+  animation: demo-pulse 2.4s ease-in-out infinite;
 }
 
 @keyframes demo-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 .demo-tabs {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   padding: 3px;
   border-radius: var(--r-pill);
   background: var(--canvas);
   margin-bottom: var(--s-md);
-  overflow-x: auto;
-  scrollbar-width: none;
 }
 
-.demo-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-/* Selected tab lifts onto white, as the pricing-tab pattern does. */
+/* The selected tab is marked by one pill that slides between them
+   (Motion layoutId), so the button itself only changes colour. */
 .demo-tab {
+  position: relative;
   flex: 1;
   min-height: 34px;
-  padding: 7px 12px;
+  padding: 7px 10px;
   border: 0;
   border-radius: var(--r-pill);
   background: transparent;
@@ -832,12 +797,28 @@
   font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
-  transition: background-color 0.18s ease, color 0.18s ease;
+  transition: color var(--dur-hover) ease;
 }
 
 .demo-tab[data-active="true"] {
-  background: var(--surface-1);
   color: var(--ink);
+}
+
+.demo-tab-indicator {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface-1);
+}
+
+.demo-tab-label {
+  position: relative;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .demo-tab:not([data-active="true"]):hover {
+    color: var(--ink);
+  }
 }
 
 .demo-signals {
@@ -847,25 +828,21 @@
 
 .demo-signal {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 110px 46px;
+  grid-template-columns: minmax(0, 1fr) 104px 44px;
   align-items: center;
   gap: var(--s-sm);
   padding: 9px 10px;
   border-radius: var(--r-md);
   border: 1px solid transparent;
   color: var(--ink-tertiary);
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity 0.35s ease, transform 0.35s ease, border-color 0.3s ease,
-    background-color 0.3s ease, color 0.3s ease;
+  transition:
+    border-color var(--dur-ui) ease,
+    background-color var(--dur-ui) ease,
+    color var(--dur-ui) ease;
 }
 
-.demo-signal[data-revealed="true"] {
-  opacity: 1;
-  transform: none;
-}
-
-/* A signal that clears the correlation threshold is promoted to charcoal. */
+/* A signal that clears the correlation threshold is promoted to charcoal.
+   One below it stays grey, so the panel shows its own reasoning. */
 .demo-signal[data-correlated="true"] {
   background: var(--canvas);
   border-color: var(--hairline);
@@ -896,7 +873,7 @@
 
 .demo-spark {
   width: 100%;
-  height: 32px;
+  height: 30px;
 }
 
 .demo-signal-corr {
@@ -907,51 +884,17 @@
   font-variant-numeric: tabular-nums;
 }
 
-.demo-stages {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-md);
-  margin: var(--s-md) 0;
-  padding: 10px;
-  border-radius: var(--r-md);
-  background: var(--canvas);
-}
-
-.demo-stage {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--ink-tertiary);
-  transition: color 0.25s ease;
-}
-
-.demo-stage[data-state="active"] {
-  color: var(--ink);
-}
-
-.demo-stage[data-state="done"] {
-  color: var(--ink-muted);
-}
-
 .demo-output {
+  margin-top: var(--s-md);
   border-top: 1px solid var(--hairline-soft);
   padding-top: var(--s-md);
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity 0.4s ease, transform 0.4s ease;
-}
-
-.demo-output[data-visible="true"] {
-  opacity: 1;
-  transform: none;
 }
 
 .demo-output-head {
   display: flex;
   align-items: center;
   gap: var(--s-sm);
-  margin-bottom: var(--s-xs);
+  margin-bottom: 6px;
 }
 
 .demo-sev {
@@ -978,7 +921,7 @@
 
 .demo-headline {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
   letter-spacing: -0.012em;
   color: var(--ink);
@@ -1000,6 +943,11 @@
 
 @media (max-width: 520px) {
   .demo-signal {
-    grid-template-columns: minmax(0, 1fr) 72px 40px;
+    grid-template-columns: minmax(0, 1fr) 68px 38px;
+  }
+
+  .demo-tab {
+    font-size: 12px;
+    padding: 7px 4px;
   }
 }
