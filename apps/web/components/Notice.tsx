@@ -1,38 +1,24 @@
 /**
- * Shown when the dashboard cannot read the API: missing token, unreachable
- * service, or no projects registered yet. It explains the fix rather than
- * rendering an empty screen.
+ * Shown when the dashboard cannot read the API: unreachable service, or no
+ * projects connected yet. It explains the next step rather than rendering an
+ * empty screen.
  */
 export function Notice({
   title,
   body,
-  hint,
+  action,
 }: {
   title: string;
   body: string;
-  hint?: string;
+  action?: React.ReactNode;
 }) {
   return (
-    <div className="notice">
-      <div className="notice-title">{title}</div>
-      <div className="notice-body">{body}</div>
-      {hint ? <pre>{hint}</pre> : null}
+    <div className="ui-card ui-card-pad">
+      <h2 className="ui-card-title">{title}</h2>
+      <p className="ui-body" style={{ marginTop: 8 }}>
+        {body}
+      </p>
+      {action ? <div style={{ marginTop: 18 }}>{action}</div> : null}
     </div>
-  );
-}
-
-/** Notice variant for a fetch that failed. */
-export function ApiUnavailable({ error }: { error: string }) {
-  return (
-    <Notice
-      title="No data to show"
-      body={error}
-      hint={`# start the stack, then create a project
-docker compose up -d
-
-curl -X POST $OPSPULSE_API_URL/v1/auth/register \\
-  -H 'Content-Type: application/json' \\
-  -d '{"email":"you@example.com","name":"You","password":"a-long-password"}'`}
-    />
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Wordmark } from "../Wordmark";
 
 const COLUMNS = [
   {
@@ -33,13 +34,14 @@ const COLUMNS = [
 export function Footer() {
   return (
     <footer className="mk-footer">
-      <div className="mk-container">
+      <div className="ui-container">
         <div className="mk-footer-grid">
           <div className="mk-footer-col">
-            <span className="mk-wordmark" style={{ marginBottom: 12 }}>
+            <span className="ui-wordmark" style={{ marginBottom: 12 }}>
+              <Wordmark />
               OpsPulse
             </span>
-            <p className="mk-body-sm" style={{ maxWidth: "34ch" }}>
+            <p className="ui-body-sm" style={{ maxWidth: "34ch" }}>
               Engineering and business operations intelligence. Raw signals in,
               written incidents out.
             </p>
@@ -58,8 +60,8 @@ export function Footer() {
           ))}
         </div>
         <div className="mk-footer-bottom">
-          <p className="mk-caption">© {new Date().getFullYear()} OpsPulse</p>
-          <p className="mk-caption">Built on an append-only event log.</p>
+          <p className="ui-caption">© {new Date().getFullYear()} OpsPulse</p>
+          <p className="ui-caption">Built on an append-only event log.</p>
         </div>
       </div>
     </footer>

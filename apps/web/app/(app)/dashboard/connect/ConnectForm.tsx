@@ -25,10 +25,15 @@ export function ConnectForm({
 
   return (
     <form action={action} className="connect-form">
-      {available.length > 0 ? (
-        <label className="connect-field">
-          <span>Repository</span>
-          <select name="repo" defaultValue={available[0]?.full_name} disabled={pending}>
+      <label className="ui-field">
+        <span>Repository</span>
+        {available.length > 0 ? (
+          <select
+            className="ui-select"
+            name="repo"
+            defaultValue={available[0]?.full_name}
+            disabled={pending}
+          >
             {available.map((repo) => (
               <option key={repo.id} value={repo.full_name}>
                 {repo.full_name}
@@ -36,11 +41,9 @@ export function ConnectForm({
               </option>
             ))}
           </select>
-        </label>
-      ) : (
-        <label className="connect-field">
-          <span>Repository</span>
+        ) : (
           <input
+            className="ui-input"
             name="repo"
             placeholder="owner/name"
             autoComplete="off"
@@ -48,20 +51,28 @@ export function ConnectForm({
             disabled={pending}
             required
           />
-        </label>
-      )}
-
-      <label className="connect-field">
-        <span>Default branch</span>
-        <input name="default_branch" defaultValue="main" disabled={pending} />
+        )}
       </label>
 
-      <button type="submit" className="connect-submit" disabled={pending}>
-        {pending ? "Connecting…" : "Connect repository"}
-      </button>
+      <label className="ui-field">
+        <span>Default branch</span>
+        <input className="ui-input" name="default_branch" defaultValue="main" disabled={pending} />
+      </label>
 
-      {state.error ? <p className="connect-error">{state.error}</p> : null}
-      {state.message ? <p className="connect-message">{state.message}</p> : null}
+      <div className="connect-actions">
+        <button type="submit" className="ui-btn ui-btn-primary" disabled={pending}>
+          {pending ? "Connecting…" : "Connect repository"}
+        </button>
+        {pending ? <span className="ui-caption">Installing the webhook…</span> : null}
+      </div>
+
+      {state.error ? <p className="ui-notice ui-notice-error">{state.error}</p> : null}
+      {state.message ? (
+        <p className="ui-notice ui-notice-ok">
+          {state.message}
+          {state.secret ? <code className="connect-secret">{state.secret}</code> : null}
+        </p>
+      ) : null}
     </form>
   );
 }

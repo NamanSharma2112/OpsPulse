@@ -16,31 +16,32 @@ export function Hero() {
   return (
     <section className="mk-hero">
       <motion.div
-        className="mk-container mk-hero-grid"
+        className="ui-container mk-hero-grid"
         variants={group}
         initial="hidden"
         animate="shown"
       >
         <div className="mk-hero-copy">
-          <motion.span className="mk-chip" variants={child}>
-            <span className="mk-chip-dot" />
+          <motion.span className="ui-chip" variants={child}>
+            <span className="ui-chip-dot" />
             Correlation engine with written explanations
           </motion.span>
 
-          <motion.h1 className="mk-display-xl" variants={child}>
-            Engineering &amp; business operations intelligence
+          <motion.h1 className="ui-display-xl" variants={child}>
+            OpsPulse — Engineering &amp; Business Operations Intelligence
+            Platform
           </motion.h1>
 
-          <motion.p className="mk-body-lg" variants={child}>
+          <motion.p className="ui-body-lg" variants={child}>
             OpsPulse works out which of your signals moved together, then writes
             the incident in a paragraph anyone can act on.
           </motion.p>
 
           <motion.div className="mk-hero-actions" variants={child}>
-            <Link href="/dashboard" className="mk-btn mk-btn-primary">
+            <Link href="/dashboard" className="ui-btn ui-btn-primary">
               Get started
             </Link>
-            <Link href="#how-it-works" className="mk-btn mk-btn-secondary">
+            <Link href="#how-it-works" className="ui-btn ui-btn-secondary">
               See how it works
             </Link>
           </motion.div>

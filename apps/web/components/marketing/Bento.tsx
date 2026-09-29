@@ -25,8 +25,8 @@ export function BentoDetection() {
       initial="hidden"
       animate={inView ? "shown" : "hidden"}
     >
-      <h3 className="mk-card-title">Detect what actually moved</h3>
-      <p className="mk-body-sm">
+      <h3 className="ui-card-title">Detect what actually moved</h3>
+      <p className="ui-body-sm">
         Every metric gets a baseline from its own history, not a threshold
         somebody guessed in 2019.
       </p>
@@ -48,6 +48,11 @@ export function BentoDetection() {
             />
           ))}
         </div>
+        <p className="mk-bento-caption">
+          <i style={{ background: "var(--ink)" }} />
+          {bars.filter((h) => h > 60).length} of {bars.length} buckets outside the
+          expected band
+        </p>
       </div>
     </motion.div>
   );
@@ -65,6 +70,9 @@ export function BentoCorrelation() {
     { name: "CDN cache hit", value: 0.11 },
   ];
 
+  // The same threshold the hero demo uses, so the two tell one story.
+  const FLOOR = 0.5;
+
   return (
     <motion.div
       className="mk-bento"
@@ -73,8 +81,8 @@ export function BentoCorrelation() {
       initial="hidden"
       animate={inView ? "shown" : "hidden"}
     >
-      <h3 className="mk-card-title">Connect it to a cause</h3>
-      <p className="mk-body-sm">
+      <h3 className="ui-card-title">Connect it to a cause</h3>
+      <p className="ui-body-sm">
         Engineering and business signals share one timeline, so a latency spike
         and a revenue dip stop being two investigations.
       </p>
@@ -82,7 +90,7 @@ export function BentoCorrelation() {
       <div className="mk-bento-visual">
         <div className="mk-corr">
           {rows.map((row, i) => (
-            <div className="mk-corr-row" key={row.name}>
+            <div className="mk-corr-row" key={row.name} data-weak={row.value < FLOOR}>
               <span className="mk-corr-name">{row.name}</span>
               <span className="mk-corr-bar">
                 <motion.span
@@ -100,6 +108,11 @@ export function BentoCorrelation() {
             </div>
           ))}
         </div>
+        <p className="mk-bento-caption">
+          <i style={{ background: "var(--ink)" }} />
+          Ranked against the anomaly window · {rows.filter((r) => r.value >= FLOOR).length} of{" "}
+          {rows.length} above the threshold
+        </p>
       </div>
     </motion.div>
   );

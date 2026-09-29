@@ -37,31 +37,10 @@
   margin: 0 0 28px;
 }
 
+/* Inherits every button rule from ui.css; only the full width is local. */
 .auth-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
   width: 100%;
   min-height: 46px;
-  padding: 12px 18px;
-  border: 1px solid transparent;
-  border-radius: var(--r-md);
-  background: var(--ink);
-  color: var(--on-primary);
-  font-size: 15px;
-  font-weight: 500;
-  transition: background-color var(--dur-hover) ease, transform var(--dur-press) var(--ease-out);
-}
-
-.auth-btn:active {
-  transform: scale(0.98);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .auth-btn:hover {
-    background: var(--inverse-canvas);
-  }
 }
 
 .auth-scopes {

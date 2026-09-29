@@ -1,4 +1,4 @@
-import { Empty } from "@/components/Empty";
+import { Badge } from "@/components/Badge";
 import { listGitHubRepositories, listProjects, listRepositories } from "@/lib/api";
 import { ConnectForm } from "./ConnectForm";
 
@@ -21,18 +21,20 @@ export default async function ConnectPage() {
 
   return (
     <>
-      <h1 className="page-title">Connect a repository</h1>
-      <p className="page-subtitle">
-        OpsPulse installs the webhook for you and starts recording events as
-        soon as GitHub delivers the first one.
-      </p>
+      <header className="dash-head">
+        <h1 className="ui-title">Connect a repository</h1>
+        <p className="ui-body">
+          OpsPulse installs the webhook for you and starts recording events as
+          soon as GitHub delivers the first one.
+        </p>
+      </header>
 
-      <div className="card" style={{ padding: 20 }}>
+      <div className="ui-card ui-card-pad">
         {github.ok ? (
           <ConnectForm repositories={github.data.repositories} connected={connected} />
         ) : (
           <>
-            <p className="row-meta" style={{ marginBottom: 16 }}>
+            <p className="ui-body-sm" style={{ marginBottom: 16 }}>
               {github.error}. Enter a repository by hand — you will need to add
               the webhook yourself.
             </p>
@@ -43,22 +45,19 @@ export default async function ConnectPage() {
 
       {connected.length > 0 ? (
         <>
-          <h2 className="page-title" style={{ fontSize: 17 }}>
-            Already connected
-          </h2>
-          <div className="card">
+          <h2 className="dash-section-title">Already connected</h2>
+          <div className="ui-card">
             {connected.map((name) => (
-              <div className="row" key={name}>
-                <div className="row-main">
-                  <div className="row-title">{name}</div>
+              <div className="ui-row" key={name}>
+                <Badge variant="success" label="webhook active" />
+                <div className="ui-row-main">
+                  <div className="ui-row-title">{name}</div>
                 </div>
               </div>
             ))}
           </div>
         </>
-      ) : (
-        <Empty message="" />
-      )}
+      ) : null}
     </>
   );
 }

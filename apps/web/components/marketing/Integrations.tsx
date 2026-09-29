@@ -24,8 +24,8 @@ const INTEGRATIONS: Integration[] = [
 export function Integrations() {
   return (
     <section className="mk-marquee" id="integrations">
-      <div className="mk-container mk-marquee-label">
-        <p className="mk-body-sm">
+      <div className="ui-container mk-marquee-label">
+        <p className="ui-body-sm">
           OpsPulse reads the systems you already run — code, deploys, paging,
           errors, revenue.
         </p>

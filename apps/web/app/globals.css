@@ -26,7 +26,9 @@
   /* Accent — reserved for AI surfaces, never a generic CTA */
   --fin-orange: #ff5600;
 
-  /* Report palette, only inside product UI mockups */
+  /* Report palette — DESIGN.md's in-product chart colours. Used for state
+     marks inside the product surface, never as a brand-level surface. */
+  --report-orange: #fe4c02;
   --report-blue: #65b5ff;
   --report-green: #0bdf50;
   --report-pink: #ff2067;

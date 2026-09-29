@@ -178,8 +178,16 @@ surfaces. Tokens live in `apps/web/app/globals.css`; the marketing styles in
 Saans is proprietary, so the build substitutes Inter (weight 500 for display)
 and JetBrains Mono, both self-hosted through `next/font`.
 
-The signed-in dashboard keeps its own dark theme, scoped to `.dash` in
-`apps/web/app/(app)/dashboard.css`.
+One design language runs through every surface. The shared primitives —
+container, type scale, buttons, cards, rows, badges, nav, form fields — live
+in `apps/web/app/ui.css` and are loaded by all three layouts (marketing,
+dashboard, sign-in). Each surface's own stylesheet holds only the shapes
+unique to it, and nothing outside `globals.css` names a colour directly, so
+the system cannot quietly drift apart.
+
+State colours in the product come from DESIGN.md's report palette, used the
+way the guide intends: the dot in a badge carries the colour, the label stays
+charcoal — colour encodes state without the text losing contrast.
 
 ## Documentation
 

@@ -9,7 +9,7 @@ import {
   listProjects,
 } from "@/lib/api";
 
-export type ActionState = { error?: string; message?: string };
+export type ActionState = { error?: string; message?: string; secret?: string };
 
 /**
  * Connects a GitHub repository, creating the organization and project it
@@ -64,6 +64,7 @@ export async function connectRepositoryAction(
     message:
       `Connected ${repo}, but the webhook was not installed: ` +
       `${result.data.manual_reason ?? "unknown reason"}. Add it by hand at ` +
-      `${result.data.webhook_url} with secret ${result.data.webhook_secret}`,
+      `${result.data.webhook_url}, with this secret:`,
+    secret: result.data.webhook_secret,
   };
 }

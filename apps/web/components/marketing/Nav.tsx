@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 import { indicator } from "./motion";
+import { Wordmark } from "../Wordmark";
 
 const LINKS = [
   { href: "#how-it-works", label: "How it works" },
@@ -33,36 +34,36 @@ export function Nav() {
   }, []);
 
   return (
-    <header className="mk-nav" data-scrolled={scrolled} data-open={open}>
-      <div className="mk-container">
-        <div className="mk-nav-inner">
-          <Link href="/" className="mk-wordmark" onClick={() => setOpen(false)}>
-            <Mark />
+    <header className="ui-nav" data-scrolled={scrolled} data-open={open}>
+      <div className="ui-container">
+        <div className="ui-nav-inner">
+          <Link href="/" className="ui-wordmark" onClick={() => setOpen(false)}>
+            <Wordmark />
             OpsPulse
           </Link>
 
-          <nav className="mk-nav-links" onMouseLeave={() => setHovered(null)}>
+          <nav className="ui-nav-links" onMouseLeave={() => setHovered(null)}>
             {LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="mk-nav-link"
+                className="ui-nav-link"
                 onMouseEnter={() => setHovered(link.href)}
               >
                 {hovered === link.href && !reduce ? (
                   <motion.span
                     layoutId="mk-nav-hover"
-                    className="mk-nav-link-bg"
+                    className="ui-nav-link-bg"
                     transition={indicator}
                   />
                 ) : null}
-                <span className="mk-nav-link-label">{link.label}</span>
+                <span className="ui-nav-link-label">{link.label}</span>
               </Link>
             ))}
           </nav>
 
-          <div className="mk-nav-actions">
-            <Link href="/dashboard" className="mk-btn mk-btn-primary">
+          <div className="ui-nav-actions">
+            <Link href="/dashboard" className="ui-btn ui-btn-primary">
               Get started
             </Link>
             <button
@@ -95,18 +96,3 @@ export function Nav() {
   );
 }
 
-function Mark() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-      <rect width="18" height="18" rx="5" fill="#111111" />
-      <path
-        d="M3.6 9.4h2.6l1.5-3.6 2 7 1.6-3.4h3.1"
-        fill="none"
-        stroke="#ffffff"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}

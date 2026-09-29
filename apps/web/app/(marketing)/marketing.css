@@ -1,225 +1,23 @@
 /*
- * Marketing surface. Follows DESIGN.md: cream canvas anchors the page, white
- * cards lift off it for hierarchy, hairline borders instead of shadows,
- * charcoal as the system primary, and Fin Orange reserved for AI surfaces.
- *
- * Division of labour with Motion: CSS owns hover and press, because a
- * transition is the cheapest thing that works. Motion owns entrances, exits
- * and the indicators that travel between elements. Anything animated here
- * names its properties — never `transition: all`.
+ * Marketing-only layout. Every primitive — container, type, buttons, chips,
+ * cards, nav — comes from app/ui.css; only the shapes unique to the landing
+ * page live here.
  */
 
-.mk {
-  background: var(--canvas);
-  color: var(--ink);
-  font-size: 16px;
-  line-height: 1.5;
-  overflow-x: clip;
+/* Sections ---------------------------------------------------------------- */
+.mk-section {
+  padding: var(--s-section) 0;
 }
 
-.mk-container {
-  width: 100%;
-  max-width: var(--container);
-  margin: 0 auto;
-  padding: 0 24px;
+.mk-section-tight {
+  padding: 0 0 var(--s-section);
 }
 
-/* Type scale ---------------------------------------------------------------
-   Weight 500 carries display; tracking pulls negative in proportion to size. */
-.mk-display-xl {
-  font-size: clamp(36px, 4.8vw, 56px);
-  font-weight: 500;
-  line-height: 1.05;
-  letter-spacing: -0.028em;
-  margin: 0;
-  max-width: 17ch;
+.mk-section-head {
+  margin-bottom: 56px;
 }
 
-.mk-display-lg {
-  font-size: clamp(28px, 3.4vw, 42px);
-  font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: -0.025em;
-  margin: 0;
-  max-width: 20ch;
-}
-
-.mk-display-md {
-  font-size: clamp(24px, 3vw, 34px);
-  font-weight: 500;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  margin: 0;
-}
-
-.mk-card-title {
-  font-size: 19px;
-  font-weight: 500;
-  line-height: 1.3;
-  letter-spacing: -0.014em;
-  margin: 0;
-}
-
-.mk-body-lg {
-  font-size: 18px;
-  line-height: 1.55;
-  letter-spacing: -0.006em;
-  color: var(--ink-muted);
-  margin: 0;
-  max-width: 44ch;
-}
-
-.mk-body {
-  font-size: 15px;
-  line-height: 1.55;
-  color: var(--ink-muted);
-  margin: 0;
-}
-
-.mk-body-sm {
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--ink-muted);
-  margin: 0;
-}
-
-.mk-caption {
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--ink-subtle);
-  margin: 0;
-}
-
-/* Sentence case, weight 500, never all-caps tracked. */
-.mk-eyebrow {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink-subtle);
-  margin: 0 0 12px;
-}
-
-/* Buttons — 8px radius, never pill ---------------------------------------- */
-.mk-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 40px;
-  padding: 10px 18px;
-  border-radius: var(--r-md);
-  border: 1px solid transparent;
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 1.2;
-  white-space: nowrap;
-  transition:
-    background-color var(--dur-hover) ease,
-    border-color var(--dur-hover) ease,
-    color var(--dur-hover) ease,
-    transform var(--dur-press) var(--ease-out);
-}
-
-/* Press feedback. The interface confirms it heard the click before anything
-   else happens. */
-.mk-btn:active {
-  transform: scale(0.97);
-}
-
-.mk-btn-primary {
-  background: var(--ink);
-  color: var(--on-primary);
-}
-
-.mk-btn-secondary {
-  background: var(--surface-1);
-  color: var(--ink);
-  border-color: var(--hairline);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .mk-btn-primary:hover {
-    background: var(--inverse-canvas);
-  }
-
-  .mk-btn-secondary:hover {
-    background: var(--surface-2);
-    border-color: var(--ink-tertiary);
-  }
-}
-
-/* Navigation -------------------------------------------------------------- */
-.mk-nav {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background: color-mix(in srgb, var(--canvas) 80%, transparent);
-  border-bottom: 1px solid transparent;
-  transition: background-color var(--dur-ui) ease, border-color var(--dur-ui) ease;
-}
-
-/* On scroll the bar solidifies and grows a hairline. */
-.mk-nav[data-scrolled="true"] {
-  background: color-mix(in srgb, var(--canvas) 94%, transparent);
-  backdrop-filter: saturate(180%) blur(12px);
-  border-bottom-color: var(--hairline);
-}
-
-.mk-nav-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-lg);
-  height: 64px;
-}
-
-.mk-wordmark {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 17px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-}
-
-.mk-nav-links {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-/* One pill travels between links (Motion layoutId), so the link itself only
-   changes colour. */
-.mk-nav-link {
-  position: relative;
-  padding: 8px 12px;
-  font-size: 14px;
-  color: var(--ink-muted);
-  transition: color var(--dur-hover) ease;
-}
-
-.mk-nav-link-bg {
-  position: absolute;
-  inset: 0;
-  border-radius: var(--r-md);
-  background: var(--surface-2);
-}
-
-.mk-nav-link-label {
-  position: relative;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .mk-nav-link:hover {
-    color: var(--ink);
-  }
-}
-
-.mk-nav-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--s-xs);
-}
-
+/* Mobile navigation ------------------------------------------------------- */
 .mk-nav-toggle {
   display: none;
   align-items: center;
@@ -252,17 +50,11 @@
   color: var(--ink-muted);
 }
 
-/* Sections ---------------------------------------------------------------- */
-.mk-section {
-  padding: var(--s-section) 0;
-}
-
-.mk-section-tight {
-  padding: 0 0 var(--s-section);
-}
-
-.mk-section-head {
-  margin-bottom: 56px;
+@media (hover: hover) and (pointer: fine) {
+  .mk-nav-mobile a:hover {
+    background: var(--surface-2);
+    color: var(--ink);
+  }
 }
 
 /* Hero -------------------------------------------------------------------- */
@@ -274,14 +66,22 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
   gap: clamp(32px, 5vw, 64px);
-  align-items: center;
+  /* Both columns start at the same baseline, so the headline and the panel
+     share a top edge instead of floating against each other. */
+  align-items: start;
 }
 
-.mk-hero-copy .mk-display-xl {
+.mk-hero-copy {
+  /* Both columns start on the same line. The chip's top edge is the
+     baseline the demo card is aligned to. */
+  padding-top: 0;
+}
+
+.mk-hero-copy .ui-display-xl {
   margin-top: 18px;
 }
 
-.mk-hero-copy .mk-body-lg {
+.mk-hero-copy .ui-body-lg {
   margin-top: 18px;
 }
 
@@ -290,65 +90,6 @@
   flex-wrap: wrap;
   gap: var(--s-sm);
   margin-top: 28px;
-}
-
-/* Chips ------------------------------------------------------------------- */
-.mk-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 5px 11px 5px 9px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-pill);
-  background: var(--surface-1);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink-muted);
-}
-
-.mk-chip-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--r-pill);
-  background: var(--fin-orange);
-}
-
-/* Product mockup card — 16px radius, the protagonist of each section ------- */
-.mk-mockup {
-  background: var(--surface-1);
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-xl);
-  overflow: hidden;
-}
-
-.mk-mockup-bar {
-  display: flex;
-  align-items: center;
-  gap: var(--s-sm);
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--hairline-soft);
-}
-
-.mk-mockup-dots {
-  display: flex;
-  gap: 6px;
-}
-
-.mk-mockup-dots i {
-  width: 9px;
-  height: 9px;
-  border-radius: var(--r-pill);
-  background: var(--hairline);
-}
-
-.mk-mockup-title {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink-muted);
-}
-
-.mk-mockup-body {
-  padding: var(--s-md);
 }
 
 /* Integration marquee ----------------------------------------------------- */
@@ -372,8 +113,8 @@
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
 }
 
-/* Constant motion, so linear. A CSS animation rather than JS, because it runs
-   off the main thread and keeps moving while the page is still loading. */
+/* Constant motion, so linear. A CSS animation rather than JS, because it
+   runs off the main thread and keeps moving while the page is still busy. */
 .mk-marquee-row {
   display: flex;
   flex-shrink: 0;
@@ -440,7 +181,7 @@
   transition: border-color var(--dur-hover) ease;
 }
 
-.mk-bento .mk-body-sm {
+.mk-bento .ui-body-sm {
   margin-top: 8px;
   max-width: 42ch;
 }
@@ -457,12 +198,28 @@
   border-top: 1px solid var(--hairline-soft);
 }
 
-/* Sparkline bars inside a bento box. Motion drives scaleY. */
+.mk-bento-caption {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--ink-subtle);
+}
+
+.mk-bento-caption i {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  flex-shrink: 0;
+}
+
+/* Sparkline bars. Motion drives scaleY. */
 .mk-bars {
   display: flex;
   align-items: flex-end;
   gap: 5px;
-  height: 60px;
+  height: 64px;
 }
 
 .mk-bars i {
@@ -470,6 +227,7 @@
   border-radius: var(--r-xs) var(--r-xs) 0 0;
   background: var(--surface-2);
   transform-origin: bottom;
+  transition: background-color var(--dur-hover) ease;
 }
 
 .mk-bars i[data-flag="true"] {
@@ -489,7 +247,7 @@
 }
 
 .mk-corr-name {
-  width: 108px;
+  width: 112px;
   flex-shrink: 0;
   font-size: 13px;
   color: var(--ink-muted);
@@ -510,6 +268,11 @@
   border-radius: var(--r-pill);
   background: var(--ink);
   transform-origin: left;
+}
+
+/* Below the threshold a row is noise, and is drawn as such. */
+.mk-corr-row[data-weak="true"] .mk-corr-bar span {
+  background: var(--ink-tertiary);
 }
 
 .mk-corr-value {
@@ -538,7 +301,15 @@
   border: 1px solid var(--hairline);
   border-radius: var(--r-lg);
   background: var(--surface-1);
-  transition: border-color var(--dur-hover) ease;
+  transition: border-color var(--dur-hover) ease, transform var(--dur-hover) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  /* A small lean towards the reader, enough to say the row is a thing. */
+  .mk-step:hover {
+    border-color: var(--ink-tertiary);
+    transform: translateX(3px);
+  }
 }
 
 .mk-step-index {
@@ -564,21 +335,17 @@
 }
 
 .mk-step-title {
+  display: block;
   font-size: 15px;
   font-weight: 500;
   letter-spacing: -0.01em;
 }
 
 .mk-step-note {
+  display: block;
   font-size: 13px;
   color: var(--ink-subtle);
   margin-top: 1px;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .mk-step:hover {
-    border-color: var(--ink-tertiary);
-  }
 }
 
 /* The AI step is the one place Fin Orange is allowed. */
@@ -630,14 +397,8 @@
   max-width: 46ch;
 }
 
-.mk-cta-copy .mk-body {
+.mk-cta-copy .ui-body {
   margin-top: 10px;
-}
-
-.mk-cta-actions {
-  display: flex;
-  gap: var(--s-sm);
-  flex-wrap: wrap;
 }
 
 /* Footer ------------------------------------------------------------------ */
@@ -674,8 +435,7 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .mk-footer-col a:hover,
-  .mk-nav-mobile a:hover {
+  .mk-footer-col a:hover {
     color: var(--ink);
   }
 }
@@ -697,21 +457,21 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .mk-hero-copy {
+    padding-top: 0;
+  }
+
   .mk-footer-grid {
     grid-template-columns: 1fr 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .mk-nav-links {
-    display: none;
-  }
-
   .mk-nav-toggle {
     display: inline-flex;
   }
 
-  .mk-nav[data-open="true"] .mk-nav-mobile {
+  .ui-nav[data-open="true"] .mk-nav-mobile {
     display: flex;
   }
 
@@ -741,7 +501,7 @@
 
 /* Hero live demo ----------------------------------------------------------
    A working miniature of the product, framed as a product-mockup card. */
-.demo .mk-mockup-bar {
+.demo .ui-mockup-bar {
   justify-content: flex-start;
 }
 
@@ -754,13 +514,13 @@
   color: var(--ink-subtle);
 }
 
-/* A slow opacity pulse. Decorative, off the main thread, and the only thing
-   on the page that loops. */
+/* A slow opacity pulse. Decorative, and the only thing on the page that
+   loops besides the marquee. */
 .demo-live i {
   width: 6px;
   height: 6px;
   border-radius: var(--r-pill);
-  background: var(--semantic-success, #0bdf50);
+  background: var(--report-green);
   animation: demo-pulse 2.4s ease-in-out infinite;
 }
 
@@ -895,22 +655,6 @@
   align-items: center;
   gap: var(--s-sm);
   margin-bottom: 6px;
-}
-
-.demo-sev {
-  padding: 2px 8px;
-  border-radius: var(--r-xs);
-  font-size: 11px;
-  font-weight: 500;
-  border: 1px solid var(--hairline);
-  color: var(--ink-muted);
-  background: var(--canvas);
-}
-
-.demo-sev[data-sev="critical"] {
-  color: var(--semantic-error);
-  border-color: color-mix(in srgb, var(--semantic-error) 35%, transparent);
-  background: color-mix(in srgb, var(--semantic-error) 8%, transparent);
 }
 
 .demo-window {

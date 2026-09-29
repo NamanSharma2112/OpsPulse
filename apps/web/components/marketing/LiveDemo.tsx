@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
+import { Badge } from "../Badge";
 import { crossfade, indicator } from "./motion";
 
 /*
@@ -141,21 +142,21 @@ export function LiveDemo() {
   }, [active]);
 
   return (
-    <div className="mk-mockup demo">
-      <div className="mk-mockup-bar">
-        <div className="mk-mockup-dots">
+    <div className="ui-mockup demo">
+      <div className="ui-mockup-bar">
+        <div className="ui-mockup-dots">
           <i />
           <i />
           <i />
         </div>
-        <span className="mk-mockup-title">OpsPulse — incident analysis</span>
+        <span className="ui-mockup-title">OpsPulse — incident analysis</span>
         <span className="demo-live">
           <i />
           live
         </span>
       </div>
 
-      <div className="mk-mockup-body">
+      <div className="ui-mockup-body">
         <div className="demo-tabs" role="tablist" aria-label="Example incidents">
           {SCENARIOS.map((s, i) => (
             <button
@@ -201,9 +202,7 @@ export function LiveDemo() {
               transition={crossfade}
             >
               <div className="demo-output-head">
-                <span className="demo-sev" data-sev={scenario.severity.toLowerCase()}>
-                  {scenario.severity}
-                </span>
+                <Badge variant={scenario.severity.toLowerCase()} label={scenario.severity} />
                 <span className="demo-window">{scenario.window}</span>
               </div>
               <p className="demo-headline">{scenario.headline}</p>
