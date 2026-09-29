@@ -32,7 +32,11 @@ type Config struct {
 	// TokenEncryptionKey seals GitHub access tokens at rest, 32 bytes hex.
 	TokenEncryptionKey string
 	// SecureCookies marks the session cookie Secure; off for plain-HTTP dev.
-	SecureCookies   bool
+	SecureCookies bool
+	// RunMigrations applies pending migrations on startup, so pointing the
+	// service at an empty database is all a deployment needs.
+	RunMigrations   bool
+	MigrationsDir   string
 	LogLevel        string
 	ShutdownTimeout time.Duration
 }
@@ -57,6 +61,8 @@ func Load() (Config, error) {
 		PublicAPIURL:       env("PUBLIC_API_URL", "http://localhost:8080"),
 		TokenEncryptionKey: env("TOKEN_ENCRYPTION_KEY", ""),
 		SecureCookies:      boolean("SECURE_COOKIES", false),
+		RunMigrations:      boolean("RUN_MIGRATIONS", true),
+		MigrationsDir:      env("MIGRATIONS_DIR", ""),
 		LogLevel:           env("LOG_LEVEL", "info"),
 		ShutdownTimeout:    duration("SHUTDOWN_TIMEOUT", 15*time.Second),
 	}

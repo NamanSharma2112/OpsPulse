@@ -17,6 +17,8 @@ RUN apk add --no-cache ca-certificates curl \
     && adduser -D -u 10001 opspulse
 
 COPY --from=build /out/api /usr/local/bin/api
+# Applied by the service on startup; see internal/store/postgres/migrate.go.
+COPY infra/migrations /app/migrations
 
 USER opspulse
 EXPOSE 8080

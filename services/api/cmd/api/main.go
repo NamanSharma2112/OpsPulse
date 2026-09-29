@@ -50,6 +50,16 @@ func run() error {
 	defer db.Close()
 	log.Info("connected to database")
 
+	if cfg.RunMigrations {
+		dir, err := postgres.FindMigrationsDir(cfg.MigrationsDir)
+		if err != nil {
+			return err
+		}
+		if err := postgres.Migrate(ctx, db, dir, log); err != nil {
+			return fmt.Errorf("migrate: %w", err)
+		}
+	}
+
 	box, err := auth.NewSecretBox(cfg.TokenEncryptionKey)
 	if err != nil {
 		return fmt.Errorf("token encryption: %w", err)

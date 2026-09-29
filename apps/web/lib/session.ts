@@ -24,10 +24,8 @@ export function apiBaseUrl(): string {
 }
 
 /**
- * The API's public address, used for links the browser follows directly —
- * the GitHub sign-in redirect. In Docker the server-side base is an internal
- * hostname the browser cannot resolve, so this is configured separately.
+ * Links the browser follows itself are relative: next.config.ts proxies
+ * /v1/* to the API, so the browser only ever talks to this origin. That is
+ * what keeps the session cookie working without a shared parent domain.
  */
-export function publicApiBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_URL ?? apiBaseUrl();
-}
+export const SIGN_IN_PATH = "/v1/auth/github";

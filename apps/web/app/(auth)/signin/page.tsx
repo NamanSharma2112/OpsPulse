@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isSignedIn } from "@/lib/api";
-import { publicApiBaseUrl } from "@/lib/session";
+import { SIGN_IN_PATH } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -15,9 +15,9 @@ export default async function SignInPage({
   if (await isSignedIn()) redirect("/dashboard");
 
   const { error } = await searchParams;
-  // The browser follows this link itself, so it must be the API's public
-  // address rather than an internal container hostname.
-  const signInHref = `${publicApiBaseUrl()}/v1/auth/github`;
+  // Relative: the dashboard proxies /v1/* to the API, so the browser stays
+  // on one origin and the session cookie lands where it is read.
+  const signInHref = SIGN_IN_PATH;
 
   return (
     <div className="auth-card">

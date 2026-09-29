@@ -1,0 +1,85 @@
+# Render Blueprint — deploys Postgres, the API and the dashboard together.
+#
+# In Render: New → Blueprint → pick this repository. Render reads this file
+# and creates all three. The only values it will ask for are the two GitHub
+# OAuth credentials; everything else is wired or generated here.
+#
+# Shape: the dashboard is the single public origin. It proxies /v1/* to the
+# API, so the session cookie has one host and GitHub has one webhook URL.
+
+databases:
+  - name: opspulse-db
+    databaseName: opspulse
+    user: opspulse
+    plan: free
+
+services:
+  # The API. Applies its own migrations on boot, so an empty database is
+  # all it needs.
+  - type: web
+    name: opspulse-api
+    runtime: docker
+    dockerfilePath: ./infra/docker/api.Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      - key: OPSPULSE_ENV
+        value: production
+      - key: HTTP_ADDR
+        value: ":8080"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: opspulse-db
+          property: connectionString
+      # Generated once by Render and kept. Losing JWT_SECRET signs everyone
+      # out; losing TOKEN_ENCRYPTION_KEY makes stored GitHub tokens
+      # unreadable and users have to sign in again.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: TOKEN_ENCRYPTION_KEY
+        sync: false
+      - key: SECURE_COOKIES
+        value: "true"
+      # The dashboard's address is the public origin for all three of these.
+      - key: APP_URL
+        fromService:
+          type: web
+          name: opspulse-web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: PUBLIC_API_URL
+        fromService:
+          type: web
+          name: opspulse-web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: CORS_ORIGINS
+        fromService:
+          type: web
+          name: opspulse-web
+          envVarKey: RENDER_EXTERNAL_URL
+      # Must match the callback on the GitHub OAuth app exactly. Set it to
+      # <your dashboard URL>/v1/auth/github/callback.
+      - key: GITHUB_REDIRECT_URL
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+
+  # The dashboard, and the only service the browser talks to.
+  - type: web
+    name: opspulse-web
+    runtime: docker
+    dockerfilePath: ./infra/docker/web.Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: NEXT_OUTPUT
+        value: standalone
+      # Server-side only, over Render's network.
+      - key: OPSPULSE_API_URL
+        fromService:
+          type: web
+          name: opspulse-api
+          envVarKey: RENDER_EXTERNAL_URL

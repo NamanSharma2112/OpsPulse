@@ -11,9 +11,13 @@ matching `.down.sql`, and each runs inside a single transaction.
 
 ## Applying them
 
-`docker compose up` mounts this directory into the Postgres container's
-`/docker-entrypoint-initdb.d`, so a fresh database applies every `.up.sql`
-automatically on first start.
+The API applies pending `.up.sql` files on startup, in filename order, inside
+a Postgres advisory lock so two instances starting together cannot race. What
+it applied is recorded in `schema_migrations`. This is the same path locally
+and in production, so there is one mechanism to reason about.
+
+Set `RUN_MIGRATIONS=false` to turn it off, and `MIGRATIONS_DIR` to point
+somewhere other than the default.
 
 Against an existing database, apply one by hand:
 

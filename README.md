@@ -42,9 +42,10 @@ cp .env.example .env     # PowerShell: copy .env.example .env
 docker compose up --build
 ```
 
-Postgres applies everything in `infra/migrations` the first time its volume
-is created. The API is on `:8080`; the web app is on `:3000`, serving the
-landing page at `/` and the dashboard at `/dashboard`.
+The API applies pending migrations on startup, so an empty database is all
+it needs. Everything is served from `http://localhost:3000` — the landing
+page at `/`, the dashboard at `/dashboard`, and the API proxied at `/v1/*`.
+The API also listens on `:8080` for direct calls, but nothing needs it to.
 
 ### Sign in with GitHub
 
@@ -189,12 +190,24 @@ State colours in the product come from DESIGN.md's report palette, used the
 way the guide intends: the dot in a badge carries the colour, the label stays
 charcoal — colour encodes state without the text losing contrast.
 
+## Deploying
+
+`render.yaml` describes Postgres, the API and the dashboard, so Render's
+Blueprint flow creates all three from the repository. Any host that runs two
+containers and a Postgres works the same way.
+
+The dashboard is the only public address: it proxies `/v1/*` to the API, so
+the session cookie has one host and GitHub has one webhook URL. See
+[docs/deployment.md](docs/deployment.md) for the variables and the two keys
+worth keeping safe.
+
 ## Documentation
 
 - [Architecture overview](docs/architecture/overview.md) — the write path, the
   read path, layering, and what is deliberately not built
 - [API reference](docs/architecture/api.md) — every endpoint
 - [Decision records](docs/decisions/) — why things are the way they are
+- [Deployment](docs/deployment.md) — hosting it, and the env it needs
 - [Migrations](infra/migrations/README.md) — schema conventions
 - [DESIGN.md](DESIGN.md) — the design system the marketing site implements
 
