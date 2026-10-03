@@ -1,10 +1,13 @@
 package httpapi
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/NamanSharma2112/OpsPulse/services/api/internal/domain"
 
 	gh "github.com/NamanSharma2112/OpsPulse/services/api/internal/github"
 )
@@ -80,7 +83,14 @@ func (s *Server) handleGitHubCallback(w http.ResponseWriter, r *http.Request) {
 	session, err := s.githubAuth.Complete(r.Context(), code)
 	if err != nil {
 		s.log.Error("github sign-in failed", "error", err)
-		s.redirectToApp(w, r, "/signin?error="+url.QueryEscape("could not complete sign-in with GitHub"))
+		// A clash between two accounts is the user's to resolve, so it says
+		// what happened. Everything else stays vague on purpose.
+		message := "could not complete sign-in with GitHub"
+		if errors.Is(err, domain.ErrConflict) {
+			message = "That email address already belongs to another OpsPulse account. " +
+				"Sign in to it first, or use a different GitHub account."
+		}
+		s.redirectToApp(w, r, "/signin?error="+url.QueryEscape(message))
 		return
 	}
 

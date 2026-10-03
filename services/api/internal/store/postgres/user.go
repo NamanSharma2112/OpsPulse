@@ -2,7 +2,10 @@ package postgres
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/NamanSharma2112/OpsPulse/services/api/internal/domain"
@@ -55,26 +58,83 @@ func (r *UserRepo) GetByGitHubID(ctx context.Context, githubID int64) (*domain.U
 // UpsertGitHub creates or refreshes the account behind a GitHub identity,
 // storing the sealed access token so OpsPulse can act on the user's behalf.
 //
-// The email is only written on insert: a user who set a different address in
-// OpsPulse should not have it overwritten every time they sign in.
+// There are two unique indexes on users — github_id and lower(email) — so a
+// single ON CONFLICT cannot cover both. An address that already has a
+// password account must adopt the GitHub identity rather than insert a second
+// row, which would fail on users_email_key.
 func (r *UserRepo) UpsertGitHub(ctx context.Context, u *domain.User) error {
-	const q = `INSERT INTO users
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return translate(err)
+	}
+	defer func() { _ = tx.Rollback(context.WithoutCancel(ctx)) }()
+
+	// 1. A returning user: refresh the profile and the token.
+	const refresh = `UPDATE users SET
+			name = $2,
+			github_login = $3,
+			avatar_url = coalesce(nullif($4, ''), avatar_url),
+			github_access_token = coalesce(nullif($5, ''), github_access_token),
+			github_token_scopes = coalesce(nullif($6, ''), github_token_scopes),
+			github_connected_at = now(),
+			updated_at = now()
+		WHERE github_id = $1
+		RETURNING id, email, created_at, updated_at`
+	err = tx.QueryRow(ctx, refresh, u.GitHubID, u.Name, u.GitHubLogin, u.AvatarURL,
+		u.GitHubAccessToken, u.GitHubTokenScopes).
+		Scan(&u.ID, &u.Email, &u.CreatedAt, &u.UpdatedAt)
+	if err == nil {
+		return translate(tx.Commit(ctx))
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return translate(err)
+	}
+
+	// 2. An account already exists on this address with no GitHub identity —
+	//    someone who signed up with a password. Link the two rather than
+	//    stranding them with a duplicate-email failure.
+	const link = `UPDATE users SET
+			github_id = $2,
+			github_login = $3,
+			avatar_url = coalesce(nullif($4, ''), avatar_url),
+			github_access_token = coalesce(nullif($5, ''), github_access_token),
+			github_token_scopes = coalesce(nullif($6, ''), github_token_scopes),
+			github_connected_at = now(),
+			updated_at = now()
+		WHERE lower(email) = lower($1) AND github_id IS NULL
+		RETURNING id, created_at, updated_at`
+	err = tx.QueryRow(ctx, link, u.Email, u.GitHubID, u.GitHubLogin, u.AvatarURL,
+		u.GitHubAccessToken, u.GitHubTokenScopes).
+		Scan(&u.ID, &u.CreatedAt, &u.UpdatedAt)
+	if err == nil {
+		return translate(tx.Commit(ctx))
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return translate(err)
+	}
+
+	// 3. The address is taken by a different GitHub account. Linking it would
+	//    hand one person another's data, so this stops with a reason the
+	//    caller can show.
+	var taken bool
+	if err := tx.QueryRow(ctx,
+		`SELECT true FROM users WHERE lower(email) = lower($1)`, u.Email).Scan(&taken); err == nil {
+		return fmt.Errorf("%w: %s is already signed in to OpsPulse with a different GitHub account",
+			domain.ErrConflict, u.Email)
+	} else if !errors.Is(err, pgx.ErrNoRows) {
+		return translate(err)
+	}
+
+	// 4. Nobody here yet.
+	const create = `INSERT INTO users
 			(email, name, github_id, github_login, avatar_url,
 			 github_access_token, github_token_scopes, github_connected_at)
 		VALUES ($1, $2, $3, $4, nullif($5, ''), nullif($6, ''), nullif($7, ''), now())
-		-- users_github_id_key is a partial index, so the conflict target has
-		-- to repeat its predicate for Postgres to infer it.
-		ON CONFLICT (github_id) WHERE github_id IS NOT NULL DO UPDATE
-			SET name = excluded.name,
-			    github_login = excluded.github_login,
-			    avatar_url = excluded.avatar_url,
-			    github_access_token = coalesce(excluded.github_access_token, users.github_access_token),
-			    github_token_scopes = coalesce(excluded.github_token_scopes, users.github_token_scopes),
-			    github_connected_at = now(),
-			    updated_at = now()
 		RETURNING id, created_at, updated_at`
-	err := r.pool.QueryRow(ctx, q, u.Email, u.Name, u.GitHubID, u.GitHubLogin, u.AvatarURL,
-		u.GitHubAccessToken, u.GitHubTokenScopes).
-		Scan(&u.ID, &u.CreatedAt, &u.UpdatedAt)
-	return translate(err)
+	if err := tx.QueryRow(ctx, create, u.Email, u.Name, u.GitHubID, u.GitHubLogin,
+		u.AvatarURL, u.GitHubAccessToken, u.GitHubTokenScopes).
+		Scan(&u.ID, &u.CreatedAt, &u.UpdatedAt); err != nil {
+		return translate(err)
+	}
+	return translate(tx.Commit(ctx))
 }
