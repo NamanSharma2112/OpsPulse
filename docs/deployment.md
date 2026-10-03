@@ -100,22 +100,40 @@ curl https://<dashboard>/v1/auth/providers    # {"github":true,"password":true}
 with GitHub and automatic webhook installation will be unavailable, and the
 API logs a warning saying so at startup.
 
-## Running it locally instead
+## Running it locally
 
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
 
-The dashboard is on `http://localhost:3000` and is the origin to use.
-Webhooks need a public address, so for local development run a tunnel and
-point `PUBLIC_API_URL` and `GITHUB_REDIRECT_URL` at it:
+Everything is on `http://localhost:3000`. Nothing else to configure: the API
+creates its own schema on first boot.
+
+**Sign in with email and password.** With no OAuth app configured — the
+default in `.env.example` — the sign-in page offers email and password
+instead, and says so. Create an account on the page and you are in. This is
+the quickest way to look around.
+
+`GET /v1/auth/providers` reports which methods a server offers, and the
+sign-in page follows it: GitHub when configured, the form when not, both when
+GitHub is available and you prefer an address.
+
+**To use GitHub locally**, create an OAuth app with
+`http://localhost:3000/v1/auth/github/callback` as its callback, and set
+`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` and `TOKEN_ENCRYPTION_KEY` in
+`.env`. Restart with `docker compose up -d api`.
+
+**Webhooks need a public address**, since GitHub cannot reach `localhost`.
+For deliveries to arrive locally, run a tunnel and point `PUBLIC_API_URL` and
+`GITHUB_REDIRECT_URL` at it:
 
 ```bash
 cloudflared tunnel --url http://localhost:3000
 ```
 
-Without that, sign-in and the dashboard work, but no deliveries arrive.
+Without it, sign-in and the dashboard work and a repository connects — only
+the deliveries are missing.
 
 ## Schema changes after the first deploy
 

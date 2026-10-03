@@ -77,7 +77,10 @@ pick a repository, and OpsPulse installs the webhook itself.
 
 ### Without GitHub
 
-Password sign-in still works, and the webhook is configured by hand:
+With no OAuth app configured, the sign-in page offers email and password
+instead and says so — create an account on the page and you are in. This is
+the quickest way to run it locally. Connecting a repository then needs the
+webhook added by hand:
 
 ```bash
 TOKEN=$(curl -sS -X POST localhost:8080/v1/auth/register \

@@ -64,6 +64,52 @@ async function request<T>(
   }
 }
 
+/** Which sign-in methods this server offers. Needs no session. */
+export async function authProviders(): Promise<{ password: boolean; github: boolean }> {
+  try {
+    const res = await fetch(`${apiBaseUrl()}/v1/auth/providers`, { cache: "no-store" });
+    if (!res.ok) return { password: true, github: false };
+    return (await res.json()) as { password: boolean; github: boolean };
+  } catch {
+    // The API is unreachable; assume the local default so the page still
+    // renders something useful rather than an error.
+    return { password: true, github: false };
+  }
+}
+
+/** Credentials accepted by the API, mirrored here for the sign-in form. */
+export interface SessionResponse {
+  token: string;
+  expires_at: string;
+}
+
+/** Exchanges credentials for a session. Used by the sign-in server action. */
+export async function passwordSignIn(
+  mode: "login" | "register",
+  body: Record<string, string>,
+): Promise<ApiResult<SessionResponse>> {
+  try {
+    const res = await fetch(`${apiBaseUrl()}/v1/auth/${mode}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok) {
+      const message =
+        json && typeof json === "object" && "error" in json
+          ? (json as { error: { message: string } }).error.message
+          : `request failed with status ${res.status}`;
+      return { ok: false, error: message };
+    }
+    return { ok: true, data: json as SessionResponse };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "unknown error";
+    return { ok: false, error: `could not reach the API: ${message}` };
+  }
+}
+
 /** True when the request carries a session. */
 export async function isSignedIn(): Promise<boolean> {
   return (await sessionToken()) !== "";

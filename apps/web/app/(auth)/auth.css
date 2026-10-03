@@ -114,3 +114,61 @@
     color: var(--ink);
   }
 }
+
+/* Email and password sign-in ---------------------------------------------- */
+.auth-form {
+  display: grid;
+  gap: 14px;
+  text-align: left;
+  margin-top: 4px;
+}
+
+.auth-form .auth-btn {
+  margin-top: 4px;
+}
+
+/* A quiet secondary action: switching mode, or revealing the form. */
+.auth-toggle {
+  margin-top: 14px;
+  padding: 6px 4px;
+  border: 0;
+  background: none;
+  font-size: 13px;
+  color: var(--ink-subtle);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--dur-hover) ease;
+}
+
+.auth-toggle:disabled {
+  opacity: 0.5;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .auth-toggle:hover:not(:disabled) {
+    color: var(--ink);
+  }
+}
+
+.auth-hint {
+  margin: 0 0 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  background: var(--canvas);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-muted);
+  text-align: left;
+}
+
+.auth-hint code {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.auth-alert {
+  margin-bottom: 18px;
+  text-align: left;
+}
