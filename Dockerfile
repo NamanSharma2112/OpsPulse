@@ -1,3 +1,11 @@
+# The API image.
+#
+# This lives at the repository root, unlike web.Dockerfile, because container
+# platforms treat one directory as both the build context and the place they
+# look for a Dockerfile — Back4App's "root" parameter is exactly this. The
+# build copies from services/api/ and infra/migrations/, so its context has to
+# be the repository root, which means the Dockerfile has to be here too.
+#
 # Build the API as a static binary, then ship it on a distroless-style base.
 FROM golang:1.24-alpine AS build
 

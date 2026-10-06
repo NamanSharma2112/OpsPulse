@@ -19,7 +19,7 @@ services:
   - type: web
     name: opspulse-api
     runtime: docker
-    dockerfilePath: ./infra/docker/api.Dockerfile
+    dockerfilePath: ./Dockerfile
     dockerContext: .
     plan: free
     healthCheckPath: /healthz

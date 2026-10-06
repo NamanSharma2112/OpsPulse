@@ -50,7 +50,8 @@ anything you care about.
 ## Anywhere else
 
 Any host that runs two containers and a Postgres works the same way. Build
-`infra/docker/api.Dockerfile` and `infra/docker/web.Dockerfile`, both with
+`Dockerfile` (the API, at the root so container platforms find it) and
+`infra/docker/web.Dockerfile`, both with
 the repository root as the build context.
 
 **API** — needs to reach Postgres; does not need to be public.

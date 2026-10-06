@@ -20,7 +20,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: infra/docker/api.Dockerfile
+      dockerfile: Dockerfile
     environment:
       OPSPULSE_ENV: ${OPSPULSE_ENV:-development}
       HTTP_ADDR: ":8080"
