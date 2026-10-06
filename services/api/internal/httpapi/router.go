@@ -51,6 +51,7 @@ func (s *Server) routes() http.Handler {
 
 	// Analytics (M2) and the engineering health score (M3) derived from it.
 	mux.Handle("GET /v1/projects/{projectID}/analytics", s.requireAuth(http.HandlerFunc(s.handleProjectAnalytics)))
+	mux.Handle("GET /v1/projects/{projectID}/score", s.requireAuth(http.HandlerFunc(s.handleProjectScore)))
 
 	// GitHub webhook ingest. Authenticated by delivery signature, not a token.
 	mux.HandleFunc("POST /v1/webhooks/github", s.handleGitHubWebhook)

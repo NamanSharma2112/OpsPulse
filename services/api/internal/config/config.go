@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/NamanSharma2112/OpsPulse/services/api/internal/domain"
 )
 
 // Config holds every knob the API service reads at startup.
@@ -39,6 +41,13 @@ type Config struct {
 	MigrationsDir   string
 	LogLevel        string
 	ShutdownTimeout time.Duration
+
+	// How much each pillar contributes to the M3 health score. A product
+	// judgement rather than a derived constant, so it is tunable without a
+	// rebuild — see docs/decisions/0006.
+	HealthWeightReliability float64
+	HealthWeightDelivery    float64
+	HealthWeightPerformance float64
 }
 
 // Load reads configuration from the environment, applying defaults suited to
@@ -65,6 +74,10 @@ func Load() (Config, error) {
 		MigrationsDir:      env("MIGRATIONS_DIR", ""),
 		LogLevel:           env("LOG_LEVEL", "info"),
 		ShutdownTimeout:    duration("SHUTDOWN_TIMEOUT", 15*time.Second),
+
+		HealthWeightReliability: number("HEALTH_WEIGHT_RELIABILITY", domain.DefaultWeights.Reliability),
+		HealthWeightDelivery:    number("HEALTH_WEIGHT_DELIVERY", domain.DefaultWeights.Delivery),
+		HealthWeightPerformance: number("HEALTH_WEIGHT_PERFORMANCE", domain.DefaultWeights.Performance),
 	}
 
 	if cfg.JWTSecret == "" {
@@ -90,6 +103,17 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("SECURE_COOKIES must be true in production")
 	}
 	return cfg, nil
+}
+
+// HealthWeights are the configured pillar weights. They are normalized at the
+// point of use, so a set that does not sum to 1 rescales rather than
+// distorting every score.
+func (c Config) HealthWeights() domain.Weights {
+	return domain.Weights{
+		Reliability: c.HealthWeightReliability,
+		Delivery:    c.HealthWeightDelivery,
+		Performance: c.HealthWeightPerformance,
+	}
 }
 
 // GitHubConfigured reports whether sign-in with GitHub is available.
@@ -143,4 +167,18 @@ func list(key, fallback string) []string {
 		}
 	}
 	return out
+}
+
+// number reads a float from the environment, falling back when it is absent
+// or unparseable — a typo in a weight must not stop the service booting.
+func number(key string, fallback float64) float64 {
+	raw := os.Getenv(key)
+	if raw == "" {
+		return fallback
+	}
+	v, err := strconv.ParseFloat(raw, 64)
+	if err != nil || v < 0 {
+		return fallback
+	}
+	return v
 }

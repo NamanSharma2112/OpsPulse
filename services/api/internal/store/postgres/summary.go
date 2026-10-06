@@ -60,12 +60,26 @@ open_issues AS (
 ),
 commit_count AS (
     SELECT count(*) AS n FROM commits WHERE project_id = $1 AND committed_at >= $2
+),
+open_incidents AS (
+    -- Also a level: an incident open since last month is open now.
+    SELECT count(*) AS n FROM incidents WHERE project_id = $1 AND status <> 'resolved'
+),
+resolve AS (
+    -- Median time to resolve, over incidents resolved inside the window.
+    SELECT
+        percentile_cont(0.5) WITHIN GROUP (
+            ORDER BY EXTRACT(EPOCH FROM (resolved_at - opened_at)) / 3600.0) AS p50,
+        count(*) AS n
+    FROM incidents
+    WHERE project_id = $1 AND resolved_at >= $2
 )
 SELECT cycle.p50, cycle.p90, cycle.merged,
        decided.merged, decided.decided,
        deploys.succeeded, deploys.finished,
-       open_issues.n, commit_count.n
-FROM cycle, decided, deploys, open_issues, commit_count`
+       open_issues.n, commit_count.n,
+       open_incidents.n, resolve.p50, resolve.n
+FROM cycle, decided, deploys, open_issues, commit_count, open_incidents, resolve`
 
 // Summary computes the analytics for one project over one window.
 func (r *AnalyticsRepo) Summary(ctx context.Context, projectID string, window time.Duration) (domain.Analytics, error) {
@@ -80,6 +94,7 @@ func (r *AnalyticsRepo) Summary(ctx context.Context, projectID string, window ti
 		&decidedMerged, &decidedTotal,
 		&a.DeploymentsSucceeded, &a.DeploymentsFinished,
 		&a.OpenIssues, &a.Commits,
+		&a.OpenIncidents, &a.MedianResolveHours, &a.IncidentsResolved,
 	); err != nil {
 		return domain.Analytics{}, translate(err)
 	}

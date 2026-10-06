@@ -41,6 +41,12 @@ type Analytics struct {
 	// apply to it.
 	OpenIssues int `json:"open_issues"`
 
+	// Incidents open right now, and how long the ones resolved in the window
+	// took. Both feed the reliability pillar of the health score.
+	OpenIncidents      int      `json:"open_incidents"`
+	MedianResolveHours *float64 `json:"median_resolve_hours"`
+	IncidentsResolved  int      `json:"incidents_resolved"`
+
 	CommitsPerDay float64 `json:"commits_per_day"`
 	Commits       int     `json:"commits"`
 }

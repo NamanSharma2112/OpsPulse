@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/NamanSharma2112/OpsPulse/services/api/internal/domain"
+	"github.com/NamanSharma2112/OpsPulse/services/api/internal/health"
 )
 
 // handleProjectAnalytics serves the M2 metric set: pull request cycle time,
@@ -70,4 +71,39 @@ func (s *Server) handleListCommits(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"commits": commits})
+}
+
+// handleProjectScore serves the M3 engineering health score.
+//
+// Distinct from handleProjectHealth, which is the operational status panel
+// (what is on fire right now). This is the composite score over a window:
+// one headline number over Reliability, Delivery and Performance.
+func (s *Server) handleProjectScore(w http.ResponseWriter, r *http.Request) {
+	project, ok := s.authorizeProject(w, r)
+	if !ok {
+		return
+	}
+
+	name := r.URL.Query().Get("window")
+	window, err := domain.ParseWindow(name)
+	if err != nil {
+		writeDomainError(w, s.log, err)
+		return
+	}
+	if name == "" {
+		name = domain.DefaultWindow
+	}
+
+	summary, err := s.analytics.Summary(r.Context(), project.ID, window)
+	if err != nil {
+		writeDomainError(w, s.log, err)
+		return
+	}
+	summary.Window = name
+
+	writeJSON(w, http.StatusOK, health.Score(health.Inputs{
+		Analytics:      summary,
+		OpenIncidents:  summary.OpenIncidents,
+		MedianResolveH: summary.MedianResolveHours,
+	}, s.cfg.HealthWeights()))
 }
