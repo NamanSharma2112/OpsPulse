@@ -1,6 +1,7 @@
 package ingest
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -83,5 +84,41 @@ func TestOccurredAtFallsBackToNow(t *testing.T) {
 	got := occurredAt(&github.Payload{})
 	if got.Before(before) {
 		t.Fatalf("occurredAt() = %v, want a recent timestamp", got)
+	}
+}
+
+func TestFirstLineIsTheCommitSubject(t *testing.T) {
+	tests := map[string]string{
+		"Fix the thing":                "Fix the thing",
+		"Fix the thing\n\nWith a body": "Fix the thing",
+		"  padded  \n body":            "padded",
+		"":                             "",
+	}
+	for message, want := range tests {
+		if got := firstLine(message); got != want {
+			t.Errorf("firstLine(%q) = %q, want %q", message, got, want)
+		}
+	}
+
+	// A pathological message must not be stored whole.
+	long := strings.Repeat("x", 500)
+	if got := firstLine(long); len(got) != 200 {
+		t.Errorf("firstLine(500 chars) length = %d, want 200", len(got))
+	}
+}
+
+func TestBranchIgnoresTags(t *testing.T) {
+	tests := map[string]string{
+		"refs/heads/main":       "main",
+		"refs/heads/feat/thing": "feat/thing",
+		"refs/tags/v1.0.0":      "",
+		"refs/pull/12/merge":    "",
+		"":                      "",
+	}
+	for ref, want := range tests {
+		p := &github.Payload{Ref: ref}
+		if got := p.Branch(); got != want {
+			t.Errorf("Branch(%q) = %q, want %q", ref, got, want)
+		}
 	}
 }

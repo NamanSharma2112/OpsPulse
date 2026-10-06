@@ -2,6 +2,7 @@ package github
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 )
 
@@ -96,6 +97,29 @@ type Payload struct {
 		Message   string    `json:"message"`
 		Timestamp time.Time `json:"timestamp"`
 	} `json:"head_commit"`
+
+	// Every commit in a push, not just the head. Commit frequency counts
+	// commits, and one push routinely carries several.
+	Commits []struct {
+		ID        string    `json:"id"`
+		Message   string    `json:"message"`
+		Timestamp time.Time `json:"timestamp"`
+		Author    struct {
+			Name     string `json:"name"`
+			Username string `json:"username"`
+		} `json:"author"`
+	} `json:"commits"`
+}
+
+// Branch strips the refs/heads/ prefix from a push ref. It returns "" for a
+// tag or any other ref, which is what keeps tag pushes out of the commit
+// projection.
+func (p *Payload) Branch() string {
+	const prefix = "refs/heads/"
+	if !strings.HasPrefix(p.Ref, prefix) {
+		return ""
+	}
+	return strings.TrimPrefix(p.Ref, prefix)
 }
 
 // ParsePayload decodes the fields OpsPulse understands.

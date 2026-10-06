@@ -80,3 +80,25 @@ type Incidents interface {
 	Resolve(ctx context.Context, projectID, externalID string, at time.Time) error
 	ListForProject(ctx context.Context, projectID, status string, limit int) ([]domain.Incident, error)
 }
+
+// Issues persists the issue projection. Every issue lands here, not only the
+// ones labelled as incidents.
+type Issues interface {
+	Upsert(ctx context.Context, i *domain.Issue) error
+	ListForProject(ctx context.Context, projectID, state string, limit int) ([]domain.Issue, error)
+}
+
+// Commits persists the commit projection, one row per commit in a push.
+type Commits interface {
+	// InsertBatch stores a push's commits and reports how many were new. The
+	// same commit arrives again when a branch merges, so the repeat is a
+	// no-op rather than an error.
+	InsertBatch(ctx context.Context, commits []domain.Commit) (int, error)
+	ListForProject(ctx context.Context, projectID string, limit int) ([]domain.Commit, error)
+}
+
+// Analytics computes the derived metric set the dashboard and the health
+// score read.
+type Analytics interface {
+	Summary(ctx context.Context, projectID string, window time.Duration) (domain.Analytics, error)
+}

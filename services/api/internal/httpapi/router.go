@@ -46,6 +46,11 @@ func (s *Server) routes() http.Handler {
 	mux.Handle("GET /v1/projects/{projectID}/pull-requests", s.requireAuth(http.HandlerFunc(s.handleListPullRequests)))
 	mux.Handle("GET /v1/projects/{projectID}/incidents", s.requireAuth(http.HandlerFunc(s.handleListIncidents)))
 	mux.Handle("GET /v1/projects/{projectID}/events", s.requireAuth(http.HandlerFunc(s.handleListEvents)))
+	mux.Handle("GET /v1/projects/{projectID}/issues", s.requireAuth(http.HandlerFunc(s.handleListIssues)))
+	mux.Handle("GET /v1/projects/{projectID}/commits", s.requireAuth(http.HandlerFunc(s.handleListCommits)))
+
+	// Analytics (M2) and the engineering health score (M3) derived from it.
+	mux.Handle("GET /v1/projects/{projectID}/analytics", s.requireAuth(http.HandlerFunc(s.handleProjectAnalytics)))
 
 	// GitHub webhook ingest. Authenticated by delivery signature, not a token.
 	mux.HandleFunc("POST /v1/webhooks/github", s.handleGitHubWebhook)

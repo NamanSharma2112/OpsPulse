@@ -27,6 +27,9 @@ type DB struct {
 	Deployments   *DeploymentRepo
 	PullRequests  *PullRequestRepo
 	Incidents     *IncidentRepo
+	Issues        *IssueRepo
+	Commits       *CommitRepo
+	Analytics     *AnalyticsRepo
 }
 
 // Connect opens a pool and verifies the database answers.
@@ -61,6 +64,9 @@ func Connect(ctx context.Context, url string) (*DB, error) {
 		Deployments:   &DeploymentRepo{pool},
 		PullRequests:  &PullRequestRepo{pool},
 		Incidents:     &IncidentRepo{pool},
+		Issues:        &IssueRepo{pool},
+		Commits:       &CommitRepo{pool},
+		Analytics:     &AnalyticsRepo{pool},
 	}, nil
 }
 

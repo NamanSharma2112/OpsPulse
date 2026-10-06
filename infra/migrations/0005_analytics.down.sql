@@ -1,0 +1,6 @@
+BEGIN;
+
+DROP TABLE IF EXISTS commits;
+DROP TABLE IF EXISTS issues;
+
+COMMIT;

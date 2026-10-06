@@ -86,7 +86,8 @@ func run() error {
 		log.Warn("GitHub OAuth is not configured; sign-in with GitHub and " +
 			"automatic webhook installation are unavailable")
 	}
-	ingestSvc := ingest.NewService(db.Events, db.Metrics, db.Deployments, db.PullRequests, db.Incidents, log)
+	ingestSvc := ingest.NewService(db.Events, db.Metrics, db.Deployments, db.PullRequests,
+		db.Incidents, db.Issues, db.Commits, log)
 
 	server := httpapi.New(httpapi.Deps{
 		Config:       cfg,
@@ -101,6 +102,9 @@ func run() error {
 		Deployments:  db.Deployments,
 		PullRequests: db.PullRequests,
 		Incidents:    db.Incidents,
+		Issues:       db.Issues,
+		Commits:      db.Commits,
+		Analytics:    db.Analytics,
 		Pinger:       db,
 	})
 
