@@ -20,7 +20,10 @@ export async function sessionToken(): Promise<string> {
 }
 
 export function apiBaseUrl(): string {
-  return process.env.OPSPULSE_API_URL ?? "http://localhost:8080";
+  // Trailing slashes are stripped: every caller appends a path that starts
+  // with "/", and "https://host//v1/..." is redirected by the API's router,
+  // which turns a POST into a GET and breaks sign-in.
+  return (process.env.OPSPULSE_API_URL ?? "http://localhost:8080").replace(/\/+$/, "");
 }
 
 /**
