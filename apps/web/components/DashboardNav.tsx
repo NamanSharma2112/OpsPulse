@@ -9,6 +9,7 @@ import { Wordmark } from "./Wordmark";
 
 const NAV = [
   { href: "/dashboard", label: "Health" },
+  { href: "/dashboard/analytics", label: "Analytics" },
   { href: "/dashboard/deployments", label: "Deployments" },
   { href: "/dashboard/pull-requests", label: "Pull requests" },
   { href: "/dashboard/incidents", label: "Incidents" },

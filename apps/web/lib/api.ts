@@ -1,4 +1,7 @@
 import type {
+  Analytics,
+  AnomalyList,
+  EngineeringHealth,
   DeploymentList,
   EventList,
   IncidentList,
@@ -144,6 +147,21 @@ export function listEvents(projectID: string, limit = 50): Promise<ApiResult<Eve
 
 export function getHealth(projectID: string): Promise<ApiResult<ProjectHealth>> {
   return request<ProjectHealth>(`/v1/projects/${projectID}/health`);
+}
+
+/** M2: the five delivery metrics over a window. */
+export function getAnalytics(projectID: string, window = "30d"): Promise<ApiResult<Analytics>> {
+  return request<Analytics>(`/v1/projects/${projectID}/analytics?window=${window}`);
+}
+
+/** M3: the composite engineering health score. */
+export function getScore(projectID: string, window = "30d"): Promise<ApiResult<EngineeringHealth>> {
+  return request<EngineeringHealth>(`/v1/projects/${projectID}/score?window=${window}`);
+}
+
+/** M5: metrics that fell outside their own baseline. */
+export function listAnomalies(projectID: string, limit = 25): Promise<ApiResult<AnomalyList>> {
+  return request<AnomalyList>(`/v1/projects/${projectID}/anomalies?limit=${limit}`);
 }
 
 export function listDeployments(projectID: string, limit = 25): Promise<ApiResult<DeploymentList>> {

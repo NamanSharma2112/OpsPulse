@@ -59,7 +59,7 @@ type Config struct {
 func Load() (Config, error) {
 	cfg := Config{
 		Env:                env("OPSPULSE_ENV", "development"),
-		HTTPAddr:           env("HTTP_ADDR", ":8080"),
+		HTTPAddr:           env("HTTP_ADDR", defaultAddr()),
 		DatabaseURL:        env("DATABASE_URL", "postgres://opspulse:opspulse@localhost:5432/opspulse?sslmode=disable"),
 		JWTSecret:          env("JWT_SECRET", ""),
 		JWTTTL:             duration("JWT_TTL", 24*time.Hour),
@@ -186,4 +186,18 @@ func number(key string, fallback float64) float64 {
 		return fallback
 	}
 	return v
+}
+
+// defaultAddr honours PORT.
+//
+// Container platforms — Back4App, Render, Railway, Fly — inject the port they
+// expect the process to listen on rather than letting the image choose one. A
+// service that hard-codes :8080 passes its own healthcheck locally and then
+// fails to receive a single request in production, which is a miserable thing
+// to debug. HTTP_ADDR still wins when it is set explicitly.
+func defaultAddr() string {
+	if p := os.Getenv("PORT"); p != "" {
+		return ":" + p
+	}
+	return ":8080"
 }

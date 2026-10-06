@@ -23,7 +23,9 @@ COPY infra/migrations /app/migrations
 USER opspulse
 EXPOSE 8080
 
+# Follows PORT for the same reason the service does: a healthcheck pinned to
+# 8080 fails every probe on a platform that injects a different port.
 HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
-    CMD curl -fsS http://localhost:8080/healthz || exit 1
+    CMD curl -fsS "http://localhost:${PORT:-8080}/healthz" || exit 1
 
 ENTRYPOINT ["/usr/local/bin/api"]

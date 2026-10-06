@@ -156,3 +156,99 @@ export interface DeploymentList { deployments: Deployment[] }
 export interface PullRequestList { pull_requests: PullRequest[] }
 export interface IncidentList { incidents: Incident[] }
 export interface EventList { events: OpsEvent[] }
+
+// M2 analytics --------------------------------------------------------------
+/**
+ * Optional fields are null when the window held no data for them. "No pull
+ * requests were merged" and "pull requests merged instantly" are different
+ * answers, and the health score depends on telling them apart.
+ */
+export interface Analytics {
+  project_id: string;
+  window: string;
+  from: string;
+  to: string;
+  pr_cycle_time_hours: number | null;
+  pr_cycle_time_p90_hours: number | null;
+  prs_merged: number;
+  pr_merge_rate: number | null;
+  prs_decided: number;
+  deployments_per_day: number;
+  deployments_succeeded: number;
+  deployments_finished: number;
+  deployment_success_rate: number | null;
+  open_issues: number;
+  commits_per_day: number;
+  commits: number;
+  open_incidents: number;
+  median_resolve_hours: number | null;
+  incidents_resolved: number;
+}
+
+// M3 health score -----------------------------------------------------------
+export interface HealthSignal {
+  name: string;
+  value: number | null;
+  unit: string;
+  score: number | null;
+  target: string;
+  known: boolean;
+}
+
+export interface HealthPillar {
+  name: string;
+  score: number | null;
+  weight: number;
+  signals: HealthSignal[];
+}
+
+export interface EngineeringHealth {
+  project_id: string;
+  window: string;
+  score: number | null;
+  pillars: HealthPillar[];
+  summary: string;
+}
+
+// M5 anomalies --------------------------------------------------------------
+export interface Anomaly {
+  id: string;
+  project_id: string;
+  metric: string;
+  bucket_start: string;
+  observed: number;
+  baseline_median: number;
+  baseline_spread: number;
+  deviation: number;
+  direction: "above" | "below";
+  explanation: string;
+  incident_id?: string;
+  detected_at: string;
+}
+
+export interface AnomalyList { anomalies: Anomaly[] }
+export interface IssueList { issues: Issue[] }
+export interface CommitList { commits: Commit[] }
+
+export interface Issue {
+  id: string;
+  project_id: string;
+  number: number;
+  title: string;
+  author: string;
+  state: "open" | "closed";
+  url?: string;
+  opened_at: string;
+  closed_at?: string;
+  updated_at: string;
+}
+
+export interface Commit {
+  id: string;
+  project_id: string;
+  sha: string;
+  message: string;
+  author: string;
+  branch: string;
+  committed_at: string;
+}
