@@ -8,9 +8,9 @@ import { EASE_OUT, STAGGER, inViewOnce } from "./motion";
  * The six stages between a raw number and something a person can act on.
  *
  * The numbers carry the sequence, so there are no connector arrows between
- * the steps — the stagger does that work instead. Fin Orange appears only on
+ * the steps — the stagger does that work instead. Lime appears only on
  * the AI stage, which is the accent's documented use; the last stage inverts
- * to charcoal because it is the output the page argues for.
+ * to the lime wash because it is the output the page argues for.
  */
 
 type Step = {

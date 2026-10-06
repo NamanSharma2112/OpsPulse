@@ -49,7 +49,7 @@ export function BentoDetection() {
           ))}
         </div>
         <p className="mk-bento-caption">
-          <i style={{ background: "var(--ink)" }} />
+          <i style={{ background: "var(--lime)" }} />
           {bars.filter((h) => h > 60).length} of {bars.length} buckets outside the
           expected band
         </p>
@@ -109,7 +109,7 @@ export function BentoCorrelation() {
           ))}
         </div>
         <p className="mk-bento-caption">
-          <i style={{ background: "var(--ink)" }} />
+          <i style={{ background: "var(--lime)" }} />
           Ranked against the anomaly window · {rows.filter((r) => r.value >= FLOOR).length} of{" "}
           {rows.length} above the threshold
         </p>

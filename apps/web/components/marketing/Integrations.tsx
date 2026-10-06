@@ -25,10 +25,7 @@ export function Integrations() {
   return (
     <section className="mk-marquee" id="integrations">
       <div className="ui-container mk-marquee-label">
-        <p className="ui-body-sm">
-          OpsPulse reads the systems you already run — code, deploys, paging,
-          errors, revenue.
-        </p>
+        <p className="ui-eyebrow">Reads the systems you already run</p>
       </div>
       <div className="mk-marquee-track">
         <Row />

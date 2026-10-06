@@ -1,127 +1,157 @@
 /*
- * Marketing-only layout. Every primitive — container, type, buttons, chips,
- * cards, nav — comes from app/ui.css; only the shapes unique to the landing
- * page live here.
+ * Marketing-only section styles. Shared primitives live in app/ui.css; this
+ * file is the landing page's own layout and the hero demo.
+ *
+ * The page is built as bands on the graphite ground, separated by hairlines
+ * rather than by colour changes — DESIGN.md's rule that borders do the work
+ * shadows do elsewhere.
  */
-
-/* Sections ---------------------------------------------------------------- */
-.mk-section {
-  padding: var(--s-section) 0;
-}
-
-.mk-section-tight {
-  padding: 0 0 var(--s-section);
-}
-
-.mk-section-head {
-  margin-bottom: 56px;
-}
-
-/* Mobile navigation ------------------------------------------------------- */
-.mk-nav-toggle {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-md);
-  background: var(--surface-1);
-  color: var(--ink);
-  transition: transform var(--dur-press) var(--ease-out);
-}
-
-.mk-nav-toggle:active {
-  transform: scale(0.94);
-}
-
-.mk-nav-mobile {
-  display: none;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--s-xs) 0 var(--s-md);
-  border-top: 1px solid var(--hairline-soft);
-}
-
-.mk-nav-mobile a {
-  padding: 10px 12px;
-  border-radius: var(--r-md);
-  font-size: 15px;
-  color: var(--ink-muted);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .mk-nav-mobile a:hover {
-    background: var(--surface-2);
-    color: var(--ink);
-  }
-}
 
 /* Hero -------------------------------------------------------------------- */
 .mk-hero {
-  padding: clamp(40px, 6vw, 72px) 0 var(--s-section);
+  position: relative;
+  padding: 96px 0 72px;
+  overflow: hidden;
+}
+
+/*
+ * The one glow in the system: a lime bloom behind the headline, at 5%, which
+ * is what keeps the fold from reading as flat graphite.
+ */
+.mk-hero::after {
+  content: "";
+  position: absolute;
+  top: -340px;
+  left: 50%;
+  width: 920px;
+  height: 620px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, var(--wash-lime) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .mk-hero-grid {
+  position: relative;
+  z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-  gap: clamp(32px, 5vw, 64px);
-  /* Both columns start at the same baseline, so the headline and the panel
-     share a top edge instead of floating against each other. */
-  align-items: start;
+  gap: 56px;
 }
 
 .mk-hero-copy {
-  /* Both columns start on the same line. The chip's top edge is the
-     baseline the demo card is aligned to. */
-  padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-lg);
+  max-width: 760px;
 }
 
 .mk-hero-copy .ui-display-xl {
-  margin-top: 18px;
+  max-width: 17ch;
 }
 
 .mk-hero-copy .ui-body-lg {
-  margin-top: 18px;
+  max-width: 54ch;
 }
 
 .mk-hero-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-sm);
-  margin-top: 28px;
+  margin-top: var(--s-xs);
 }
 
-/* Integration marquee ----------------------------------------------------- */
+/* The two panels under the fold: the terminal, then the live analysis. */
+.mk-hero-panels {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: var(--s-gutter);
+  align-items: start;
+}
+
+/* Terminal ----------------------------------------------------------------
+   A real install sequence, typed out. Mono throughout, prompt in lime. */
+.mk-term {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  min-height: 232px;
+}
+
+.mk-term-line {
+  display: flex;
+  gap: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.mk-term-prompt {
+  color: var(--lime);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.mk-term-cmd {
+  color: var(--ink-90);
+}
+
+.mk-term-out {
+  color: var(--ink-subtle);
+  padding-left: 18px;
+}
+
+.mk-term-ok {
+  color: var(--lime);
+}
+
+/* A block caret, which is what a terminal has. It blinks on a step function
+   rather than a fade, because a fading caret reads as a glow. */
+.mk-term-caret {
+  display: inline-block;
+  width: 7px;
+  height: 15px;
+  background: var(--lime);
+  translate: 0 2px;
+  animation: mk-blink 1.1s steps(1, end) infinite;
+}
+
+@keyframes mk-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Marquee -----------------------------------------------------------------
+   Constant motion, so linear, and a CSS animation so it keeps running off
+   the main thread while the rest of the page is still hydrating. */
 .mk-marquee {
+  padding: 40px 0;
   border-top: 1px solid var(--hairline);
   border-bottom: 1px solid var(--hairline);
-  padding: 28px 0;
-  background: var(--surface-1);
 }
 
 .mk-marquee-label {
-  text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: var(--s-lg);
 }
 
 .mk-marquee-track {
   display: flex;
-  overflow: hidden;
-  /* Fade the edges so the loop reads as continuous. */
-  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  gap: 56px;
+  width: max-content;
+  /* Fades the row into the page edges instead of letting logos clip. */
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
 }
 
-/* Constant motion, so linear. A CSS animation rather than JS, because it
-   runs off the main thread and keeps moving while the page is still busy. */
 .mk-marquee-row {
   display: flex;
-  flex-shrink: 0;
   align-items: center;
-  gap: var(--s-xxl);
-  padding-right: var(--s-xxl);
-  animation: mk-scroll 46s linear infinite;
+  gap: 56px;
+  padding-right: 56px;
+  animation: mk-scroll 42s linear infinite;
 }
 
 @keyframes mk-scroll {
@@ -137,20 +167,22 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 13px;
+  letter-spacing: 0.02em;
   color: var(--ink-tertiary);
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
   white-space: nowrap;
   transition: color var(--dur-hover) ease;
 }
 
 .mk-logo svg {
   flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity var(--dur-hover) ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  /* Hovering the strip pauses it and lets one name come forward. */
+  /* Pausing on hover is the affordance that says "you can read these". */
   .mk-marquee-track:hover .mk-marquee-row {
     animation-play-state: paused;
   }
@@ -158,53 +190,158 @@
   .mk-logo:hover {
     color: var(--ink);
   }
+
+  .mk-logo:hover svg {
+    opacity: 1;
+  }
+}
+
+/* Stat band --------------------------------------------------------------- */
+.mk-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.mk-stat {
+  padding: 32px var(--s-lg);
+  border-left: 1px solid var(--hairline);
+}
+
+.mk-stat:first-child {
+  border-left: none;
+  padding-left: 0;
+}
+
+.mk-stat-value {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(30px, 3.4vw, 42px);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.mk-stat-value b {
+  font-weight: 400;
+  color: var(--lime);
+}
+
+.mk-stat-label {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-subtle);
+  margin-top: 12px;
+}
+
+/* Sections ---------------------------------------------------------------- */
+.mk-section {
+  padding: var(--s-section) 0;
+}
+
+.mk-section-tight {
+  padding: 0 0 var(--s-section);
+}
+
+.mk-section-head {
+  max-width: 760px;
+  margin-bottom: 56px;
+}
+
+.mk-section-head .ui-body-lg {
+  margin-top: var(--s-md);
+}
+
+/* Numbered primitives ----------------------------------------------------
+   Modal's platform section: three blocks, each led by a zero-padded index
+   that sits in the margin. */
+.mk-primitives {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.mk-primitive {
+  background: var(--canvas);
+  padding: var(--s-xl) var(--s-lg);
+  transition: background-color var(--dur-ui) ease;
+}
+
+.mk-primitive-index {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--lime);
+}
+
+.mk-primitive h3 {
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  margin: var(--s-md) 0 10px;
+}
+
+.mk-primitive p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mk-primitive:hover {
+    background: var(--surface-1);
+  }
 }
 
 /* Bento ------------------------------------------------------------------- */
 .mk-bento-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--s-lg);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.88fr);
+  gap: var(--s-gutter);
   align-items: start;
 }
 
 .mk-bento-col {
   display: grid;
-  gap: var(--s-lg);
+  gap: var(--s-gutter);
 }
 
 .mk-bento {
   background: var(--surface-1);
   border: 1px solid var(--hairline);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   padding: var(--s-lg);
-  transition: border-color var(--dur-hover) ease;
+  transition: border-color var(--dur-ui) ease, background-color var(--dur-ui) ease;
 }
 
 .mk-bento .ui-body-sm {
-  margin-top: 8px;
-  max-width: 42ch;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .mk-bento:hover {
-    border-color: var(--ink-tertiary);
-  }
+  margin-top: 10px;
+  max-width: 48ch;
 }
 
 .mk-bento-visual {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid var(--hairline-soft);
+  margin-top: var(--s-lg);
+  padding-top: var(--s-lg);
+  border-top: 1px solid var(--hairline);
 }
 
 .mk-bento-caption {
   display: flex;
   align-items: center;
-  gap: 7px;
-  margin-top: 12px;
-  font-size: 12px;
+  gap: 8px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   color: var(--ink-subtle);
+  margin: var(--s-md) 0 0;
 }
 
 .mk-bento-caption i {
@@ -214,323 +351,198 @@
   flex-shrink: 0;
 }
 
-/* Sparkline bars. Motion drives scaleY. */
+@media (hover: hover) and (pointer: fine) {
+  .mk-bento:hover {
+    border-color: var(--hairline-strong);
+    background: var(--surface-2);
+  }
+}
+
+/* Bars — the anomaly histogram. */
 .mk-bars {
   display: flex;
   align-items: flex-end;
   gap: 5px;
-  height: 64px;
+  height: 92px;
 }
 
 .mk-bars i {
   flex: 1;
+  background: var(--hairline-loud);
   border-radius: var(--r-xs) var(--r-xs) 0 0;
-  background: var(--surface-2);
+  /* Grows from its own base, not its middle. */
   transform-origin: bottom;
-  transition: background-color var(--dur-hover) ease;
+  transition: background-color var(--dur-ui) ease;
 }
 
 .mk-bars i[data-flag="true"] {
-  background: var(--ink);
+  background: var(--lime);
 }
 
-/* Correlation rows. Motion drives scaleX. */
+/* Correlation list. */
 .mk-corr {
   display: grid;
   gap: 10px;
 }
 
 .mk-corr-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 11ch minmax(0, 1fr) 4.5ch;
   align-items: center;
   gap: var(--s-sm);
 }
 
 .mk-corr-name {
-  width: 112px;
-  flex-shrink: 0;
-  font-size: 13px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
   color: var(--ink-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mk-corr-bar {
-  position: relative;
-  flex: 1;
+  display: block;
   height: 6px;
+  background: var(--surface-3);
   border-radius: var(--r-pill);
-  background: var(--surface-2);
   overflow: hidden;
 }
 
 .mk-corr-bar span {
-  position: absolute;
-  inset: 0 auto 0 0;
+  display: block;
+  height: 100%;
+  background: var(--lime);
   border-radius: var(--r-pill);
-  background: var(--ink);
   transform-origin: left;
 }
 
-/* Below the threshold a row is noise, and is drawn as such. */
 .mk-corr-row[data-weak="true"] .mk-corr-bar span {
-  background: var(--ink-tertiary);
+  background: var(--hairline-loud);
 }
 
 .mk-corr-value {
-  width: 34px;
-  text-align: right;
-  font-size: 12px;
-  color: var(--ink-subtle);
+  font-family: var(--font-mono), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--ink-subtle);
+  text-align: right;
 }
 
-/* Pipeline ----------------------------------------------------------------
-   The numbers carry the sequence, so there are no connectors between steps. */
+/* Pipeline ---------------------------------------------------------------- */
 .mk-pipeline {
-  display: grid;
-  gap: 8px;
   list-style: none;
   margin: 0;
   padding: 0;
+  display: grid;
+  gap: 1px;
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  overflow: hidden;
 }
 
 .mk-step {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--s-md);
-  padding: 14px 16px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-lg);
+  padding: 15px var(--s-md);
   background: var(--surface-1);
-  transition: border-color var(--dur-hover) ease, transform var(--dur-hover) var(--ease-out);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  /* A small lean towards the reader, enough to say the row is a thing. */
-  .mk-step:hover {
-    border-color: var(--ink-tertiary);
-    transform: translateX(3px);
-  }
+  transition: background-color var(--dur-ui) ease;
 }
 
 .mk-step-index {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  padding-top: 2px;
   flex-shrink: 0;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--hairline);
-  background: var(--canvas);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ink-muted);
-  font-variant-numeric: tabular-nums;
+  width: 2ch;
 }
 
 .mk-step-body {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  gap: 3px;
   min-width: 0;
 }
 
 .mk-step-title {
-  display: block;
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
+  font-size: 14px;
+  font-weight: 450;
+  letter-spacing: -0.008em;
 }
 
 .mk-step-note {
-  display: block;
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.5;
   color: var(--ink-subtle);
-  margin-top: 1px;
 }
 
-/* The AI step is the one place Fin Orange is allowed. */
-.mk-step[data-accent="ai"] {
-  border-color: color-mix(in srgb, var(--fin-orange) 40%, var(--hairline));
-}
-
-.mk-step[data-accent="ai"] .mk-step-index {
-  border-color: color-mix(in srgb, var(--fin-orange) 45%, transparent);
-  background: color-mix(in srgb, var(--fin-orange) 10%, transparent);
-  color: var(--fin-orange);
-}
-
+/* The AI stage takes the accent; the final stage is the output the page
+   argues for, so it gets the lime wash. */
+.mk-step[data-accent="ai"] .mk-step-index,
 .mk-step[data-accent="ai"] .mk-step-title {
-  color: var(--fin-orange);
+  color: var(--lime);
 }
 
-/* The final step inverts to charcoal: it is the output the page argues for. */
 .mk-step[data-accent="output"] {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--on-primary);
+  background: var(--lime-ink);
 }
 
 .mk-step[data-accent="output"] .mk-step-index {
-  border-color: rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--on-primary);
+  color: var(--lime);
 }
 
 .mk-step[data-accent="output"] .mk-step-note {
-  color: var(--inverse-ink-muted);
-}
-
-/* Closing CTA ------------------------------------------------------------- */
-.mk-cta {
-  background: var(--surface-1);
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-xxl);
-  padding: clamp(28px, 4vw, 44px);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-xl);
-  flex-wrap: wrap;
-}
-
-.mk-cta-copy {
-  max-width: 46ch;
-}
-
-.mk-cta-copy .ui-body {
-  margin-top: 10px;
-}
-
-/* Footer ------------------------------------------------------------------ */
-.mk-footer {
-  border-top: 1px solid var(--hairline);
-  padding: 56px 0 36px;
-}
-
-.mk-footer-grid {
-  display: grid;
-  grid-template-columns: 1.6fr repeat(3, 1fr);
-  gap: var(--s-xl);
-}
-
-.mk-footer-col h4 {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink);
-  margin: 0 0 12px;
-}
-
-.mk-footer-col ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-}
-
-.mk-footer-col a {
-  font-size: 13px;
-  color: var(--ink-subtle);
-  transition: color var(--dur-hover) ease;
+  color: var(--pale-green);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .mk-footer-col a:hover {
-    color: var(--ink);
+  .mk-step:hover {
+    background: var(--surface-2);
+  }
+
+  .mk-step[data-accent="output"]:hover {
+    background: var(--lime-deep);
   }
 }
 
-.mk-footer-bottom {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--s-md);
-  flex-wrap: wrap;
-  margin-top: 40px;
-  padding-top: var(--s-lg);
-  border-top: 1px solid var(--hairline-soft);
-}
-
-/* Responsive -------------------------------------------------------------- */
-@media (max-width: 1024px) {
-  .mk-hero-grid,
-  .mk-bento-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .mk-hero-copy {
-    padding-top: 0;
-  }
-
-  .mk-footer-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .mk-nav-toggle {
-    display: inline-flex;
-  }
-
-  .ui-nav[data-open="true"] .mk-nav-mobile {
-    display: flex;
-  }
-
-  .mk-section {
-    padding: 64px 0;
-  }
-
-  .mk-section-tight {
-    padding: 0 0 64px;
-  }
-
-  .mk-hero {
-    padding: 28px 0 64px;
-  }
-}
-
-@media (max-width: 480px) {
-  .mk-footer-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .mk-cta {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-/* Hero live demo ----------------------------------------------------------
-   A working miniature of the product, framed as a product-mockup card. */
+/* Hero demo --------------------------------------------------------------- */
 .demo .ui-mockup-bar {
-  justify-content: flex-start;
+  justify-content: space-between;
 }
 
 .demo-live {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--lime);
   margin-left: auto;
-  font-size: 12px;
-  color: var(--ink-subtle);
 }
 
-/* A slow opacity pulse. Decorative, and the only thing on the page that
-   loops besides the marquee. */
 .demo-live i {
   width: 6px;
   height: 6px;
   border-radius: var(--r-pill);
-  background: var(--report-green);
-  animation: demo-pulse 2.4s ease-in-out infinite;
+  background: var(--lime);
+  animation: demo-pulse 2s var(--ease-quart) infinite;
 }
 
+/* Opacity and box-shadow only — the dot never changes size, so it can't
+   nudge the text beside it. */
 @keyframes demo-pulse {
   0%,
   100% {
     opacity: 1;
+    box-shadow: 0 0 0 0 var(--wash-lime);
   }
   50% {
-    opacity: 0.3;
+    opacity: 0.45;
+    box-shadow: 0 0 0 4px var(--wash-lime);
   }
 }
 
@@ -538,37 +550,36 @@
   display: flex;
   gap: 2px;
   padding: 3px;
-  border-radius: var(--r-pill);
   background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  width: max-content;
   margin-bottom: var(--s-md);
 }
 
-/* The selected tab is marked by one pill that slides between them
-   (Motion layoutId), so the button itself only changes colour. */
 .demo-tab {
   position: relative;
-  flex: 1;
-  min-height: 34px;
-  padding: 7px 10px;
-  border: 0;
+  border: none;
+  background: none;
+  padding: 6px 15px;
   border-radius: var(--r-pill);
-  background: transparent;
-  color: var(--ink-muted);
-  font-size: 13px;
-  font-weight: 500;
-  white-space: nowrap;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-subtle);
   transition: color var(--dur-hover) ease;
 }
 
 .demo-tab[data-active="true"] {
-  color: var(--ink);
+  color: var(--on-primary);
 }
 
 .demo-tab-indicator {
   position: absolute;
   inset: 0;
+  background: var(--lime);
   border-radius: var(--r-pill);
-  background: var(--surface-1);
 }
 
 .demo-tab-label {
@@ -583,115 +594,337 @@
 
 .demo-signals {
   display: grid;
-  gap: 2px;
+  gap: 1px;
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  overflow: hidden;
 }
 
 .demo-signal {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 104px 44px;
+  grid-template-columns: minmax(0, 1fr) 120px 6ch;
   align-items: center;
   gap: var(--s-sm);
-  padding: 9px 10px;
-  border-radius: var(--r-md);
-  border: 1px solid transparent;
-  color: var(--ink-tertiary);
-  transition:
-    border-color var(--dur-ui) ease,
-    background-color var(--dur-ui) ease,
-    color var(--dur-ui) ease;
+  padding: 10px 12px;
+  background: var(--canvas);
+  /* The correlated rows light up; colour carries the ranking. */
+  color: var(--hairline-loud);
+  transition: color var(--dur-ui) ease, background-color var(--dur-ui) ease;
 }
 
-/* A signal that clears the correlation threshold is promoted to charcoal.
-   One below it stays grey, so the panel shows its own reasoning. */
 .demo-signal[data-correlated="true"] {
-  background: var(--canvas);
-  border-color: var(--hairline);
-  color: var(--ink);
+  color: var(--lime);
+  background: var(--lime-05);
 }
 
 .demo-signal-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
+  display: grid;
+  gap: 2px;
   min-width: 0;
 }
 
 .demo-signal-name {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 450;
   color: var(--ink);
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .demo-signal-delta {
   font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   color: var(--ink-subtle);
 }
 
 .demo-spark {
   width: 100%;
-  height: 30px;
+  height: 32px;
+  display: block;
+  /* Inherits the row's colour, so the trace ranks with the row. */
+  color: inherit;
 }
 
 .demo-signal-corr {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 11px;
-  text-align: right;
-  color: var(--ink-subtle);
   font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--ink-subtle);
+  text-align: right;
 }
 
 .demo-output {
   margin-top: var(--s-md);
-  border-top: 1px solid var(--hairline-soft);
-  padding-top: var(--s-md);
+  padding: var(--s-md);
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
 }
 
 .demo-output-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--s-sm);
-  margin-bottom: 6px;
+  margin-bottom: 12px;
 }
 
 .demo-window {
   font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
-  color: var(--ink-subtle);
+  color: var(--ink-tertiary);
 }
 
 .demo-headline {
-  margin: 0;
   font-size: 15px;
   font-weight: 500;
   letter-spacing: -0.012em;
-  color: var(--ink);
+  margin: 0 0 8px;
 }
 
 .demo-explanation {
-  margin: 6px 0 0;
   font-size: 13px;
-  line-height: 1.55;
+  line-height: 1.6;
   color: var(--ink-muted);
+  margin: 0;
 }
 
 .demo-impact {
-  margin: 8px 0 0;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--lime);
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+}
+
+/* Closing CTA ------------------------------------------------------------- */
+.mk-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-xl);
+  flex-wrap: wrap;
+  padding: 56px var(--s-xl);
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+/* The grid texture, clipped to the panel, so the closing band carries the
+   same engineering surface the hero opens with. */
+.mk-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(to right, var(--hairline) 0 1px, transparent 1px 48px),
+    repeating-linear-gradient(to bottom, var(--hairline) 0 1px, transparent 1px 48px);
+  opacity: 0.5;
+  mask-image: radial-gradient(ellipse 70% 120% at 100% 50%, #000, transparent 70%);
+  pointer-events: none;
+}
+
+.mk-cta-copy,
+.mk-cta-actions {
+  position: relative;
+}
+
+.mk-cta-copy {
+  display: grid;
+  gap: var(--s-sm);
+}
+
+.mk-cta-copy .ui-body {
+  max-width: 52ch;
+}
+
+/* Footer ------------------------------------------------------------------ */
+.mk-footer {
+  border-top: 1px solid var(--hairline);
+  padding: 56px 0 32px;
+}
+
+.mk-footer-grid {
+  display: grid;
+  grid-template-columns: 1.6fr repeat(3, 1fr);
+  gap: var(--s-xl);
+}
+
+.mk-footer-col h4 {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
   color: var(--ink-subtle);
+  margin: 0 0 var(--s-md);
+}
+
+.mk-footer-col ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.mk-footer-col a {
+  font-size: 14px;
+  color: var(--ink-muted);
+  transition: color var(--dur-hover) ease;
+}
+
+.mk-footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-md);
+  flex-wrap: wrap;
+  margin-top: 56px;
+  padding-top: var(--s-lg);
+  border-top: 1px solid var(--hairline);
+}
+
+.mk-footer-bottom .ui-caption {
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mk-footer-col a:hover {
+    color: var(--lime);
+  }
+}
+
+/* Mobile nav -------------------------------------------------------------- */
+.mk-nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ink);
+  transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-hover) ease;
+}
+
+.mk-nav-toggle:active {
+  transform: scale(0.94);
+}
+
+.mk-nav-mobile {
+  display: none;
+  flex-direction: column;
+  padding-bottom: var(--s-md);
+  border-top: 1px solid var(--hairline);
+  margin-top: -1px;
+}
+
+.mk-nav-mobile a {
+  padding: 13px 2px;
+  font-size: 15px;
+  color: var(--ink-muted);
+  border-bottom: 1px solid var(--hairline-soft);
+  transition: color var(--dur-hover) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mk-nav-mobile a:hover {
+    color: var(--ink);
+  }
+}
+
+.ui-nav[data-open="true"] .mk-nav-mobile {
+  display: flex;
+}
+
+/* Responsive -------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .mk-hero-panels,
+  .mk-bento-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mk-primitives {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mk-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mk-stat:nth-child(3) {
+    border-left: none;
+    padding-left: 0;
+  }
+
+  .mk-stat:nth-child(n + 3) {
+    border-top: 1px solid var(--hairline);
+  }
+
+  .mk-footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--s-lg);
+  }
+}
+
+@media (max-width: 768px) {
+  .mk-hero {
+    padding: 64px 0 56px;
+  }
+
+  .mk-section {
+    padding: 88px 0;
+  }
+
+  .mk-section-tight {
+    padding-bottom: 88px;
+  }
+
+  .mk-nav-toggle {
+    display: inline-flex;
+  }
+
+  .mk-cta {
+    padding: var(--s-xl) var(--s-lg);
+  }
 }
 
 @media (max-width: 520px) {
   .demo-signal {
-    grid-template-columns: minmax(0, 1fr) 68px 38px;
+    grid-template-columns: minmax(0, 1fr) 72px 5ch;
   }
 
-  .demo-tab {
-    font-size: 12px;
-    padding: 7px 4px;
+  .demo-tabs {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 480px) {
+  .mk-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mk-stat {
+    border-left: none;
+    padding-left: 0;
+  }
+
+  .mk-stat:not(:first-child) {
+    border-top: 1px solid var(--hairline);
+  }
+
+  .mk-footer-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

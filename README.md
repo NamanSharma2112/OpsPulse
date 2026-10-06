@@ -172,15 +172,24 @@ The dashboard reads `OPSPULSE_API_URL`, `OPSPULSE_API_TOKEN` and the optional
 
 ## Design
 
-The marketing surface follows `DESIGN.md` at the repository root — an
-Intercom-derived editorial system: a cream canvas (`#f5f1ec`) rather than
-white, white cards lifting off it with hairline borders instead of shadows,
-charcoal as the system primary, and the accent orange reserved for AI
-surfaces. Tokens live in `apps/web/app/globals.css`; the marketing styles in
-`apps/web/app/(marketing)/marketing.css` reference them and nothing else.
+Every surface follows `DESIGN.md` at the repository root — a Modal-derived
+system, with its tokens read from Modal's own stylesheets rather than guessed
+from screenshots. The ground is graphite (`#181818`, never pure black), panels
+step one shade up behind 1px hairlines, radii stay small (3–10px) with buttons
+fully pill, and a single high-voltage lime (`#7fee64`) marks primitive actions
+and healthy states. Tokens live in `apps/web/app/globals.css`; every other
+stylesheet references them and nothing else.
 
-Saans is proprietary, so the build substitutes Inter (weight 500 for display)
-and JetBrains Mono, both self-hosted through `next/font`.
+ABC Diatype is licensed, so the build substitutes Inter with `cv11` enabled —
+the single-storey alternates that make it read as a neutral grotesque. DM Mono
+is Modal's actual mono and is freely available, so it ships as specified. Both
+are self-hosted through `next/font`.
+
+Mono is structural, not decorative: measurements, identifiers, statuses,
+timestamps, counts and commands are all mono and all tabular, so a column of
+metrics never reflows as it updates. Section labels are uppercase mono with a
+zero-padded index, printed by `.ui-eyebrow[data-index]` rather than by a second
+element in the markup.
 
 One design language runs through every surface. The shared primitives —
 container, type scale, buttons, cards, rows, badges, nav, form fields — live
@@ -189,9 +198,13 @@ dashboard, sign-in). Each surface's own stylesheet holds only the shapes
 unique to it, and nothing outside `globals.css` names a colour directly, so
 the system cannot quietly drift apart.
 
-State colours in the product come from DESIGN.md's report palette, used the
-way the guide intends: the dot in a badge carries the colour, the label stays
-charcoal — colour encodes state without the text losing contrast.
+State colours come from DESIGN.md's state marks, used the way the system
+intends: the dot in a badge carries the colour and the label stays quiet mono.
+Only two states colour the pill itself — critical, and healthy, since lime
+already means healthy here.
+
+The previous Intercom-derived system is kept at `docs/design/intercom.md` for
+reference.
 
 ## Deploying
 

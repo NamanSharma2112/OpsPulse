@@ -1,71 +1,105 @@
 /*
- * Design tokens from DESIGN.md (Intercom-derived system) plus a minimal
- * reset. Section styles live with their route group: the marketing site in
+ * Design tokens from DESIGN.md (Modal-derived system) plus a minimal reset.
+ * Section styles live with their route group: the marketing site in
  * (marketing)/marketing.css, the signed-in dashboard in (app)/dashboard.css.
+ *
+ * The system is dark by construction — there is no light mode to fall back
+ * to, so `color-scheme` is declared rather than inferred.
  */
 
 :root {
-  /* Ink */
-  --ink: #111111;
-  --ink-muted: #626260;
-  --ink-subtle: #7b7b78;
-  --ink-tertiary: #9c9fa5;
-  --on-primary: #ffffff;
+  color-scheme: dark;
 
-  /* Surface */
-  --canvas: #f5f1ec;
-  --surface-1: #ffffff;
-  --surface-2: #ebe7e1;
-  --inverse-canvas: #000000;
-  --inverse-surface-1: #313130;
-  --inverse-ink: #ffffff;
-  --inverse-ink-muted: #9c9fa5;
-  --hairline: #d3cec6;
-  --hairline-soft: #ebe7e1;
+  /* Ink — pure white for display, then four steps down. */
+  --ink: #ffffff;
+  --ink-90: #e8e8e8;
+  --ink-muted: #a3a3a3;
+  --ink-subtle: #747474;
+  --ink-tertiary: #5d5d5d;
 
-  /* Accent — reserved for AI surfaces, never a generic CTA */
-  --fin-orange: #ff5600;
+  /* Text that sits on a lime fill. Lime is bright, so this is the ground. */
+  --on-primary: #181818;
 
-  /* Report palette — DESIGN.md's in-product chart colours. Used for state
-     marks inside the product surface, never as a brand-level surface. */
-  --report-orange: #fe4c02;
-  --report-blue: #65b5ff;
-  --report-green: #0bdf50;
-  --report-pink: #ff2067;
-  --report-lime: #b3e01c;
-  --report-cyan: #03b2cb;
-  --semantic-error: #c41c1c;
+  /* Surface — graphite, never pure black. Panels step up, never down. */
+  --canvas: #181818;
+  --surface-1: #1c1c1c;
+  --surface-2: #242424;
+  --surface-3: #272727;
 
-  /* Radii */
-  --r-xs: 4px;
-  --r-sm: 6px;
-  --r-md: 8px;
-  --r-lg: 12px;
-  --r-xl: 16px;
-  --r-xxl: 24px;
-  --r-pill: 9999px;
+  /* Borders do the work shadows do elsewhere. */
+  --hairline: #2f2f2f;
+  --hairline-soft: #242424;
+  --hairline-strong: #3b3b3b;
+  --hairline-loud: #464646;
 
-  /* Spacing, 8px base */
+  /* The rare inverted block: light panel on the dark page. */
+  --inverse-canvas: #e8e8e8;
+  --inverse-surface-1: #ffffff;
+  --inverse-ink: #181818;
+  --inverse-ink-muted: #5d5d5d;
+
+  /* Accent — one colour for primitive actions and healthy states. A page
+     gets one filled lime button; everything else is outlined. */
+  --lime: #7fee64;
+  --lime-90: #75d95c;
+  --lime-80: #6ac355;
+  --lime-dim: #569846;
+  --lime-deep: #2d4327;
+  --lime-ink: #222d20;
+  --lime-05: #1d231c;
+  --pale-green: #c8f9b6;
+
+  /* 5% of an accent over the ground, nothing stronger. */
+  --wash-lime: #7fee640d;
+  --wash-red: #f871710d;
+  --scrim: #1c1c1ccc;
+
+  /* State marks — each the 100 step of its own ramp in DESIGN.md. */
+  --state-green: #7fee64;
+  --state-red: #f87171;
+  --state-yellow: #ffea71;
+  --state-blue: #91c8ef;
+  --state-pink: #ff8de6;
+  --semantic-error: #f87171;
+  --semantic-success: #7fee64;
+
+  /* Radii — deliberately small, so panels read as instrument housing.
+     Only buttons and chips go pill. */
+  --r-xs: 3px;
+  --r-sm: 4px;
+  --r-md: 7px;
+  --r-lg: 10px;
+  --r-xl: 10px;
+  --r-pill: 48px;
+
+  /* Spacing. Modal's own scale: 20px gutter, 24px margin, 144px section. */
   --s-xxs: 4px;
   --s-xs: 8px;
   --s-sm: 12px;
   --s-md: 16px;
+  --s-gutter: 20px;
   --s-lg: 24px;
   --s-xl: 32px;
   --s-xxl: 48px;
-  --s-section: 96px;
+  --s-section: 144px;
 
-  --container: 1280px;
+  --container: 1200px;
 
   /* Easing. The browser's built-in curves are too weak for UI; these are the
      strong equivalents. Never ease-in on an entrance — it delays the exact
-     moment the user is watching. */
+     moment the user is watching.
+
+     --ease-quart is Modal's own marketing curve, read from their stylesheet.
+     It overshoots nothing but decelerates harder than --ease-out, which is
+     what makes a drawing line or a counting number feel mechanical rather
+     than springy. Reserved for explanatory motion. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-quart: cubic-bezier(0.165, 0.84, 0.44, 1);
 
   /* Duration. UI motion stays under 300ms; marketing reveals may run longer. */
-  --dur-press: 140ms;
-  --dur-hover: 180ms;
+  --dur-press: 120ms;
+  --dur-hover: 150ms;
   --dur-ui: 220ms;
   --dur-reveal: 420ms;
 }
@@ -87,7 +121,12 @@ body {
 }
 
 body {
+  background: var(--canvas);
+  color: var(--ink);
   font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* cv11 is the single-storey `a`/`g` alternate — the detail that brings Inter
+     closest to ABC Diatype's neutral grotesque. */
+  font-feature-settings: "cv11" on;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -102,7 +141,18 @@ button {
   cursor: pointer;
 }
 
-/* Honour a reduced-motion preference everywhere. */
+::selection {
+  background: var(--lime);
+  color: var(--on-primary);
+}
+
+/* The focus ring is lime everywhere, so keyboard users get the same accent
+   sighted users get on hover. */
+:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+}
+
 /*
  * Reduced motion keeps opacity and colour transitions, which carry meaning,
  * and drops movement. Elements that animate in must still end up visible, so

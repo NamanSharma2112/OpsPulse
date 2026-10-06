@@ -13,7 +13,7 @@ const LINKS = [
 ];
 
 /**
- * Sticky top bar. It sits transparent over the cream canvas and solidifies
+ * Sticky top bar. It sits transparent over the graphite ground and solidifies
  * with a hairline once the page scrolls.
  *
  * The hovered link is marked by one pill that travels between them, rather

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { authProviders, isSignedIn } from "@/lib/api";
 import { SIGN_IN_PATH } from "@/lib/session";
 import { PasswordForm } from "./PasswordForm";
+import { Wordmark } from "@/components/Wordmark";
 
 export const dynamic = "force-dynamic";
 
@@ -21,17 +22,9 @@ export default async function SignInPage({
   return (
     <div className="auth-card">
       <span className="auth-mark">
-        <svg width="32" height="32" viewBox="0 0 18 18" aria-hidden="true">
-          <rect width="18" height="18" rx="5" fill="#111111" />
-          <path
-            d="M3.6 9.4h2.6l1.5-3.6 2 7 1.6-3.4h3.1"
-            fill="none"
-            stroke="#ffffff"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        {/* The shared mark, not a copy of it — a second definition is how the
+            sign-in page quietly ends up a version behind. */}
+        <Wordmark size={32} />
       </span>
 
       <h1 className="auth-title">Sign in to OpsPulse</h1>

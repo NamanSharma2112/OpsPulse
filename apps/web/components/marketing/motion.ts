@@ -13,6 +13,14 @@ export const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 /** Strong ease-in-out. Movement between two on-screen positions. */
 export const EASE_IN_OUT = [0.77, 0, 0.175, 1] as const;
 
+/**
+ * Modal's own marketing curve (an out-quart, read from their stylesheet).
+ * It decelerates harder than EASE_OUT without overshooting, which is what
+ * makes a drawing line or a counting number read as telemetry arriving
+ * rather than as something springing into place. Explanatory motion only.
+ */
+export const EASE_QUART = [0.165, 0.84, 0.44, 1] as const;
+
 /** Entrance for a single element. */
 export const enter = {
   duration: 0.42,
@@ -29,6 +37,12 @@ export const indicator = {
 export const crossfade = {
   duration: 0.2,
   ease: EASE_OUT,
+};
+
+/** A value drawing or counting itself in. Longer, because it is being read. */
+export const draw = {
+  duration: 0.7,
+  ease: EASE_QUART,
 };
 
 /**
@@ -52,7 +66,7 @@ export const group = {
 };
 
 export const item = {
-  hidden: { opacity: 0, transform: "translateY(8px)" },
+  hidden: { opacity: 0, transform: "translateY(10px)" },
   shown: { opacity: 1, transform: "translateY(0px)", transition: enter },
 };
 

@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { DM_Mono, Inter } from "next/font/google";
 import "./globals.css";
 
 /*
- * Saans and SaansMono are proprietary. DESIGN.md names Inter at weight 500
- * as the closest free substitute, with JetBrains Mono for the mono role.
+ * ABC Diatype is licensed, so DESIGN.md names Inter as the substitute — with
+ * `cv11` enabled in globals.css, which swaps in the single-storey alternates
+ * that make Inter read as a neutral grotesque rather than as Inter.
+ *
+ * DM Mono is the real thing: it is Modal's mono and it is freely available,
+ * so it ships as specified rather than as a stand-in.
  */
 const sans = Inter({
   subsets: ["latin"],
@@ -12,8 +16,9 @@ const sans = Inter({
   display: "swap",
 });
 
-const mono = JetBrains_Mono({
+const mono = DM_Mono({
   subsets: ["latin"],
+  weight: ["300", "400", "500"],
   variable: "--font-mono",
   display: "swap",
 });
