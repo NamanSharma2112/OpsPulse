@@ -102,3 +102,11 @@ type Commits interface {
 type Analytics interface {
 	Summary(ctx context.Context, projectID string, window time.Duration) (domain.Analytics, error)
 }
+
+// Anomalies persists detected anomalies.
+type Anomalies interface {
+	// Insert records an anomaly and reports whether it was new. Detection
+	// re-runs over buckets it has already judged, so the repeat is a no-op.
+	Insert(ctx context.Context, a *domain.Anomaly) (bool, error)
+	ListForProject(ctx context.Context, projectID string, limit int) ([]domain.Anomaly, error)
+}

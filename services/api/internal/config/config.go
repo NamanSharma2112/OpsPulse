@@ -48,6 +48,9 @@ type Config struct {
 	HealthWeightReliability float64
 	HealthWeightDelivery    float64
 	HealthWeightPerformance float64
+
+	// How often the anomaly sweep runs. Zero disables detection.
+	AnomalyInterval time.Duration
 }
 
 // Load reads configuration from the environment, applying defaults suited to
@@ -78,6 +81,8 @@ func Load() (Config, error) {
 		HealthWeightReliability: number("HEALTH_WEIGHT_RELIABILITY", domain.DefaultWeights.Reliability),
 		HealthWeightDelivery:    number("HEALTH_WEIGHT_DELIVERY", domain.DefaultWeights.Delivery),
 		HealthWeightPerformance: number("HEALTH_WEIGHT_PERFORMANCE", domain.DefaultWeights.Performance),
+
+		AnomalyInterval: duration("ANOMALY_INTERVAL", 15*time.Minute),
 	}
 
 	if cfg.JWTSecret == "" {

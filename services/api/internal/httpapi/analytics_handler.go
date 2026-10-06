@@ -107,3 +107,18 @@ func (s *Server) handleProjectScore(w http.ResponseWriter, r *http.Request) {
 		MedianResolveH: summary.MedianResolveHours,
 	}, s.cfg.HealthWeights()))
 }
+
+// handleListAnomalies serves the anomalies detected for a project.
+func (s *Server) handleListAnomalies(w http.ResponseWriter, r *http.Request) {
+	project, ok := s.authorizeProject(w, r)
+	if !ok {
+		return
+	}
+
+	list, err := s.anomalies.ListForProject(r.Context(), project.ID, queryLimit(r, 25))
+	if err != nil {
+		writeDomainError(w, s.log, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"anomalies": list})
+}

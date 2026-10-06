@@ -31,6 +31,7 @@ type Deps struct {
 	Issues       store.Issues
 	Commits      store.Commits
 	Analytics    store.Analytics
+	Anomalies    store.Anomalies
 	Pinger       interface {
 		Ping(context.Context) error
 	}
@@ -53,6 +54,7 @@ type Server struct {
 	issues       store.Issues
 	commits      store.Commits
 	analytics    store.Analytics
+	anomalies    store.Anomalies
 	pinger       interface {
 		Ping(context.Context) error
 	}
@@ -77,6 +79,7 @@ func New(d Deps) *Server {
 		issues:       d.Issues,
 		commits:      d.Commits,
 		analytics:    d.Analytics,
+		anomalies:    d.Anomalies,
 		pinger:       d.Pinger,
 	}
 	s.handler = chain(s.routes(),

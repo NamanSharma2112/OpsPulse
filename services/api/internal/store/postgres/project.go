@@ -69,3 +69,24 @@ func (r *ProjectRepo) ListForUser(ctx context.Context, userID string) ([]domain.
 		ORDER BY p.name`
 	return r.list(ctx, q, userID)
 }
+
+// ListAll returns every project id. Used by the periodic anomaly sweep, which
+// is not acting for any particular user and so cannot go through the
+// membership-scoped queries.
+func (r *ProjectRepo) ListAll(ctx context.Context) ([]string, error) {
+	rows, err := r.pool.Query(ctx, `SELECT id FROM projects ORDER BY created_at`)
+	if err != nil {
+		return nil, translate(err)
+	}
+	defer rows.Close()
+
+	out := []string{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, translate(err)
+		}
+		out = append(out, id)
+	}
+	return out, translate(rows.Err())
+}

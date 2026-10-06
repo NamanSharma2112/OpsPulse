@@ -43,3 +43,25 @@ const (
 	MetricIssueOpened  = "issue.opened"
 	MetricIssueClosed  = "issue.closed"
 )
+
+// Bucket is one time bucket of a metric series.
+type Bucket struct {
+	Start time.Time `json:"start"`
+	Value float64   `json:"value"`
+}
+
+// Anomaly is a metric observation that fell outside its own baseline.
+type Anomaly struct {
+	ID             string    `json:"id"`
+	ProjectID      string    `json:"project_id"`
+	Metric         string    `json:"metric"`
+	BucketStart    time.Time `json:"bucket_start"`
+	Observed       float64   `json:"observed"`
+	BaselineMedian float64   `json:"baseline_median"`
+	BaselineSpread float64   `json:"baseline_spread"`
+	Deviation      float64   `json:"deviation"`
+	Direction      string    `json:"direction"`
+	Explanation    string    `json:"explanation"`
+	IncidentID     *string   `json:"incident_id,omitempty"`
+	DetectedAt     time.Time `json:"detected_at"`
+}

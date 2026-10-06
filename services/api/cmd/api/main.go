@@ -13,6 +13,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/NamanSharma2112/OpsPulse/services/api/internal/anomaly"
 	"github.com/NamanSharma2112/OpsPulse/services/api/internal/auth"
 	"github.com/NamanSharma2112/OpsPulse/services/api/internal/config"
 	"github.com/NamanSharma2112/OpsPulse/services/api/internal/github"
@@ -105,8 +106,15 @@ func run() error {
 		Issues:       db.Issues,
 		Commits:      db.Commits,
 		Analytics:    db.Analytics,
+		Anomalies:    db.Anomalies,
 		Pinger:       db,
 	})
+
+	// M5 anomaly detection. M4's worker will take this over; until then it
+	// runs here, on a ticker, and stops with the rest of the process.
+	anomalySvc := anomaly.NewService(db.Metrics, db.Anomalies, db.Incidents, log)
+	sweep := anomaly.NewSweep(anomalySvc, db.Projects, cfg.AnomalyInterval, log)
+	go sweep.Run(ctx)
 
 	httpServer := server.HTTPServer()
 	errCh := make(chan error, 1)

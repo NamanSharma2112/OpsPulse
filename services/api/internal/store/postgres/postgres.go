@@ -30,6 +30,7 @@ type DB struct {
 	Issues        *IssueRepo
 	Commits       *CommitRepo
 	Analytics     *AnalyticsRepo
+	Anomalies     *AnomalyRepo
 }
 
 // Connect opens a pool and verifies the database answers.
@@ -67,6 +68,7 @@ func Connect(ctx context.Context, url string) (*DB, error) {
 		Issues:        &IssueRepo{pool},
 		Commits:       &CommitRepo{pool},
 		Analytics:     &AnalyticsRepo{pool},
+		Anomalies:     &AnomalyRepo{pool},
 	}, nil
 }
 
