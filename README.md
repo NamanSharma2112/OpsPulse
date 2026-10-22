@@ -66,6 +66,15 @@ TOKEN_ENCRYPTION_KEY=$(openssl rand -hex 32)
 Then open http://localhost:3000/signin and continue with GitHub. From there:
 pick a repository, and OpsPulse installs the webhook itself.
 
+`.env` is picked up by `docker compose` and by the host targets (`make api`,
+`make web`, `make seed`) alike, so either path sees these. Restart the API
+after editing it — the sign-in page offers GitHub only when the API reports it
+configured, which you can check directly:
+
+```bash
+curl -s localhost:8080/v1/auth/providers   # {"github":true,"password":true}
+```
+
 > **Webhooks need a public address.** GitHub cannot reach `localhost`, so for
 > local development run a tunnel and set `PUBLIC_API_URL` to its https URL:
 >

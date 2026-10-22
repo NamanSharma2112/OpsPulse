@@ -6,6 +6,19 @@
 API_DIR := services/api
 DATABASE_URL ?= postgres://opspulse:opspulse@localhost:5432/opspulse?sslmode=disable
 
+# Load .env into the host targets.
+#
+# `docker compose` reads .env by itself, so the containers have always seen it;
+# nothing read it on the host. Following the README — put GITHUB_CLIENT_ID and
+# GITHUB_CLIENT_SECRET in .env — and then running `make api` left the service
+# with neither, and the sign-in page kept reporting GitHub as unconfigured with
+# no indication why.
+#
+# Sourced by the shell rather than `include`d: make would read the file as
+# makefile syntax, so a # inside a secret would be treated as a comment and
+# silently truncate it, and a $ would be expanded.
+DOTENV := set -a; [ -f .env ] && . ./.env; set +a
+
 help: ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
 		| awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -23,13 +36,13 @@ reset: ## Stop the stack and delete the database volume
 	docker compose down -v
 
 api: ## Run the API on the host (needs a reachable Postgres)
-	cd $(API_DIR) && DATABASE_URL="$(DATABASE_URL)" go run ./cmd/api
+	@$(DOTENV); cd $(API_DIR) && DATABASE_URL="$${DATABASE_URL:-$(DATABASE_URL)}" go run ./cmd/api
 
 web: ## Run the dashboard in dev mode
-	npm run dev
+	@$(DOTENV); npm run dev
 
 seed: ## Fill a running local instance with plausible activity
-	cd $(API_DIR) && go run ./cmd/seed $(ARGS)
+	@$(DOTENV); cd $(API_DIR) && go run ./cmd/seed $(ARGS)
 
 test: test-api ## Run every test suite
 
