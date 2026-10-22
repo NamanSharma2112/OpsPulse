@@ -122,3 +122,40 @@ func TestBranchIgnoresTags(t *testing.T) {
 		}
 	}
 }
+
+func TestWorkflowIncidentKeyIsStableAcrossRuns(t *testing.T) {
+	// Two separate executions of the same workflow on the same branch own the
+	// same incident, which is what lets a green run close what a red one
+	// opened. Keyed by run id they never matched, so CI incidents never
+	// resolved.
+	first := workflowIncidentKey(99, "CI", "main")
+	second := workflowIncidentKey(99, "CI", "main")
+	if first != second {
+		t.Fatalf("same workflow and branch gave %q and %q", first, second)
+	}
+	if strings.Contains(first, "workflow_run:99:main") == false {
+		t.Fatalf("key = %q, want it to name the workflow and the branch", first)
+	}
+}
+
+func TestWorkflowIncidentKeySeparatesWorkflowsAndBranches(t *testing.T) {
+	ci := workflowIncidentKey(1, "CI", "main")
+	lint := workflowIncidentKey(2, "Lint", "main")
+	if ci == lint {
+		t.Fatalf("two workflows on one branch share the key %q, so a green "+
+			"Lint run would close a broken CI", ci)
+	}
+	if same := workflowIncidentKey(1, "CI", "release"); same == ci {
+		t.Fatalf("two branches share the key %q", ci)
+	}
+}
+
+func TestWorkflowIncidentKeyFallsBackToTheName(t *testing.T) {
+	// A delivery without workflow_id still has to produce a stable key.
+	if got, want := workflowIncidentKey(0, "CI", "main"), "workflow_run:CI:main"; got != want {
+		t.Fatalf("workflowIncidentKey(0, CI, main) = %q, want %q", got, want)
+	}
+	if got, want := workflowIncidentKey(0, "", "main"), "workflow_run:workflow:main"; got != want {
+		t.Fatalf("workflowIncidentKey(0, \"\", main) = %q, want %q", got, want)
+	}
+}

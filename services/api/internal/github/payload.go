@@ -81,6 +81,7 @@ type Payload struct {
 
 	WorkflowRun *struct {
 		ID         int64     `json:"id"`
+		WorkflowID int64     `json:"workflow_id"`
 		Name       string    `json:"name"`
 		HeadBranch string    `json:"head_branch"`
 		HeadSHA    string    `json:"head_sha"`

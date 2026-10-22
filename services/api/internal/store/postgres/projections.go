@@ -113,7 +113,18 @@ func (r *IncidentRepo) Upsert(ctx context.Context, i *domain.Incident) error {
 			SET title = excluded.title,
 			    severity = excluded.severity,
 			    status = excluded.status,
-			    resolved_at = coalesce(excluded.resolved_at, incidents.resolved_at)
+			    -- Incidents are keyed by the signal that raised them, so the
+			    -- same key breaks more than once. A repeat while still open is
+			    -- the same outage and keeps its original start; a break after
+			    -- a resolution is a new one, so the clock restarts and the old
+			    -- resolution must not survive on an open row.
+			    opened_at = CASE
+			        WHEN incidents.status = 'resolved' AND excluded.status <> 'resolved'
+			        THEN excluded.opened_at ELSE incidents.opened_at END,
+			    resolved_at = CASE
+			        WHEN excluded.status = 'resolved'
+			        THEN coalesce(excluded.resolved_at, incidents.resolved_at)
+			        ELSE NULL END
 		RETURNING id`
 	err := r.pool.QueryRow(ctx, q, i.ProjectID, i.ExternalID, i.Title, i.Severity, i.Status,
 		i.Source, i.URL, i.OpenedAt, i.ResolvedAt).Scan(&i.ID)

@@ -96,7 +96,7 @@ func TestAnomalyInsertIsIdempotentPerBucket(t *testing.T) {
 	db := testDB(t)
 	projectID := fixture(t, db)
 
-	bucket := time.Now().UTC().Truncate(24 * time.Hour).AddDate(0, 0, -1)
+	bucket := time.Now().UTC().Truncate(24*time.Hour).AddDate(0, 0, -1)
 	a := domain.Anomaly{
 		ProjectID: projectID, Metric: domain.MetricDeploymentFailed,
 		BucketStart: bucket, Observed: 40, BaselineMedian: 1, BaselineSpread: 1,
