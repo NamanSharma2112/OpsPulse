@@ -204,13 +204,13 @@ func (s *Service) applyWorkflowRun(ctx context.Context, repo *domain.Repository,
 	if run == nil || run.Status != "completed" {
 		return nil
 	}
-	externalID := "workflow_run:" + strconv.FormatInt(run.ID, 10)
 
 	// Only runs on the default branch page the team: a failing feature branch
 	// is the author's problem, a failing default branch is an incident.
 	if run.HeadBranch != repo.DefaultBranch {
 		return nil
 	}
+	externalID := workflowIncidentKey(run.WorkflowID, run.Name, run.HeadBranch)
 
 	switch run.Conclusion {
 	case "failure", "timed_out":
@@ -232,15 +232,38 @@ func (s *Service) applyWorkflowRun(ctx context.Context, repo *domain.Repository,
 			"branch": run.HeadBranch,
 		})
 	case "success":
-		// A green run on the default branch clears the workflow incidents it
-		// raised earlier.
+		// A green run on the default branch clears the incident its earlier
+		// failure opened.
 		at := nonZeroTime(run.UpdatedAt, occurred)
 		if err := s.incidents.Resolve(ctx, repo.ProjectID, externalID, at); err != nil {
 			return err
 		}
-		return nil
+		return s.record(ctx, repo.ProjectID, domain.MetricIncidentResolved, 1, at, map[string]string{
+			"source": "workflow_run",
+			"branch": run.HeadBranch,
+		})
 	}
 	return nil
+}
+
+// workflowIncidentKey identifies the incident a broken workflow owns.
+//
+// It deliberately keys on the workflow and the branch rather than on the run.
+// A run id is unique to one execution, so an incident keyed by it could only
+// ever be resolved by a re-run of that same execution: the usual recovery —
+// CI fails on one commit and passes on the next — left the incident open
+// forever, and every later break added another. Keyed this way, "CI is broken
+// on main" is one incident that opens on the first failure and closes on the
+// next success.
+//
+// workflow_id survives a workflow being renamed and is always present on a
+// GitHub delivery; the name is a fallback for payloads that omit it.
+func workflowIncidentKey(workflowID int64, name, branch string) string {
+	workflow := strconv.FormatInt(workflowID, 10)
+	if workflowID == 0 {
+		workflow = firstNonEmpty(name, "workflow")
+	}
+	return "workflow_run:" + workflow + ":" + branch
 }
 
 func (s *Service) applyIssue(ctx context.Context, repo *domain.Repository, p *github.Payload, occurred time.Time) error {

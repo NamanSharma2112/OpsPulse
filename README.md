@@ -113,6 +113,25 @@ The response includes `webhook_secret` **once**. In the repository's
 Finally point the dashboard at the API by setting `OPSPULSE_API_TOKEN` (the
 token above) in `.env`, and restart it.
 
+### Seeing it with data
+
+A fresh instance has nothing to show: every panel reads a projection, and
+projections are built from deliveries. With the API running, `make seed`
+creates an account, a project and a repository, then signs and posts a month
+of deliveries to the webhook endpoint — the same path GitHub takes, so the
+data passes through signature verification, deduplication and the projection
+pipeline rather than being written behind them.
+
+```bash
+make seed                      # 30 days against http://localhost:8080
+make seed ARGS='-days 90'      # a longer history
+```
+
+It prints the `OPSPULSE_API_TOKEN` and `OPSPULSE_PROJECT_ID` to put in `.env`,
+and the account to sign in with at http://localhost:3000/signin. A given
+`-seed` always produces the same history, so a screenshot or a bug report made
+from seeded data can be reproduced.
+
 ## Running without Docker
 
 This path needs `psql` and `make` on your PATH, so it assumes macOS, Linux or

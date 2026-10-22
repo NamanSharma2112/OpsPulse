@@ -1,7 +1,7 @@
 # OpsPulse developer tasks. Run `make help` for the list.
 .DEFAULT_GOAL := help
 .PHONY: help up down logs reset api web test test-api build build-api build-web \
-        fmt lint tidy migrate-up migrate-down
+        fmt lint tidy migrate-up migrate-down seed
 
 API_DIR := services/api
 DATABASE_URL ?= postgres://opspulse:opspulse@localhost:5432/opspulse?sslmode=disable
@@ -27,6 +27,9 @@ api: ## Run the API on the host (needs a reachable Postgres)
 
 web: ## Run the dashboard in dev mode
 	npm run dev
+
+seed: ## Fill a running local instance with plausible activity
+	cd $(API_DIR) && go run ./cmd/seed $(ARGS)
 
 test: test-api ## Run every test suite
 
